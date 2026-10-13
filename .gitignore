@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Environments
+.venv/
+.env
+*.egg-info/
+
+# WebShop data and generated files
+third_party/webshop/data/
+third_party/webshop/search_engine/
+third_party/webshop/user_session_logs/
+data/raw/
+data/processed/
+experiments/runs/
+checkpoints/
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+third_party/webshop/
+data/
+checkpoints/
+experiments/runs/
+__pycache__/
+.pytest_cache/
+.env
