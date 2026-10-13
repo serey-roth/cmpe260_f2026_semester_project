@@ -20,6 +20,113 @@ For post-training, we choose Group Relative Policy Optimization (GRPO) because i
 ## Expected Results
 We will evaluate the multi-agent baseline, the SFT-only framework, and the SFT+GRPO framework on our benchmarking evaluation splits. For each configuration, we report the average reward, the success rate, the attribute/option/price/type breakdown, and the trajectory statistics (length, items viewed, searches). These results will be compared directly against Webshop’s rule baseline, prior best model and human performance for meaningful context. Lastly, we will test GRPO checkpoints throughout the evaluation process against our verifier to determine the degree of reward overoptimization and assess reward fidelity.
 
+## Environment Setup
+
+WebShop's pinned dependencies were released for Python 3.8. Create an isolated
+Conda environment instead of installing them into the system Python. The
+commands below work on macOS and Linux:
+
+```bash
+conda create -n webshop python=3.8.13 -y
+conda activate webshop
+python --version
+```
+
+The last command should report Python 3.8.x. Conda may select a newer 3.8
+patch release such as 3.8.20. From the project root, install
+spaCy through Conda before installing the Python requirements:
+
+```bash
+cd third_party/webshop
+conda install -c conda-forge spacy=3.3.0 pydantic=1.8.2 nmslib=2.1.1 gradio=3.16.2 -y
+pip install -r requirements_arm.txt
+pip install --no-deps pyserini==0.17.0
+```
+
+On Apple Silicon, set `PYTHONNOUSERSITE=1` before running WebShop commands if
+your home directory contains packages installed for another architecture:
+
+```bash
+export PYTHONNOUSERSITE=1
+```
+
+On Apple Silicon (`arm64`), use `requirements_arm.txt`. It contains the
+compatibility adjustments documented by WebShop, including NumPy 1.24.4 and
+the newer Transformers and PyYAML versions. `nmslib`, `spacy`, and `gradio`
+are installed through Conda because pip attempts incompatible source builds.
+`pyserini` is installed without dependency resolution because its broad spaCy
+requirement otherwise tries to replace the working Python 3.8 spaCy build.
+The ARM setup script does not download the optional spaCy model because the
+WebShop text environment does not require it.
+On Intel macOS or Linux, use `requirements.txt` instead:
+
+```bash
+pip install -r requirements.txt
+```
+
+Install the remaining WebShop environment dependencies:
+
+```bash
+conda install -c pytorch faiss-cpu -y
+conda install -c conda-forge openjdk=11 -y
+```
+
+Check that the environment and core WebShop modules can be imported:
+
+```bash
+python - <<'PY'
+import sys
+import gym
+import numpy
+import torch
+import transformers
+import web_agent_site
+
+print("Python:", sys.version)
+print("Executable:", sys.executable)
+print("NumPy:", numpy.__version__)
+print("Gym:", gym.__version__)
+print("Torch:", torch.__version__)
+print("Transformers:", transformers.__version__)
+print("WebShop import: OK")
+PY
+```
+
+Finally, download the small WebShop dataset and build its local search index:
+
+```bash
+cd /path/to/cmpe260_f2026_semester_project
+bash src/scripts/setup_webshop.sh
+```
+
+The wrapper chooses `setup_arm.sh` automatically on Apple Silicon and
+`setup.sh` on Intel macOS/Linux. It can be run from any directory.
+The setup exits with an error if the upstream WebShop Google Drive data cannot
+be downloaded; in that case the smoke test cannot run until the dataset files
+are placed in `third_party/webshop/data/`.
+
+Run the smoke test from the project root to verify that WebShop can load the
+dataset, reset the text environment, expose the search bar, and execute one
+search action:
+
+```bash
+conda activate webshop
+export PYTHONNOUSERSITE=1
+pytest -q tests/test_webshop_smoke.py
+```
+
+The setup script downloads data and models and can take some time. To use the
+environment later:
+
+```bash
+conda activate webshop
+cd /path/to/cmpe260_f2026_semester_project/third_party/webshop
+```
+
+If `conda` is not found, install Miniconda or Anaconda first. Do not use the
+system Python 3.13 for WebShop; several pinned packages do not provide
+compatible builds for it.
+
 ## References
 - Evaluating Long-Context Reasoning in LLM-Based WebAgents
 - [2604.15149] LLMs Gaming Verifiers: RLVR can Lead to Reward Hacking
