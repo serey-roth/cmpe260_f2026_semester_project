@@ -1,0 +1,10 @@
+[project]
+name = "rl-webshop"
+version = "0.1.0"
+description = "Post-Training a Large Language Model with Reinforcement Learning for Long-Horizon Online Shopping on WebShop Data."
+readme = "README.md"
+authors = [
+    { name = "Serey Roth", email = "serey.roth@sjsu.edu" }
+]
+requires-python = ">=3.13"
+dependencies = []
