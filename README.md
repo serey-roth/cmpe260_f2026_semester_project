@@ -14,8 +14,12 @@ cd rl-webshop
 uv sync
 ```
 
-`uv sync` installs WebShop's dependencies, not WebShop itself. It stays a submodule in `src/webshop/`, so put it on the path when running code that imports `webshop_minimal`:
+### Ollama
+
+The baseline agent in `src/environment/main.py` calls a local model through [Ollama](https://ollama.com/download).
 
 ```bash
-PYTHONPATH=src/webshop uv run python -c "import webshop_minimal; print('ok')"
+brew install ollama        # macOS; on Linux see https://ollama.com/download
+ollama serve               # skip if the Ollama app is already running
+ollama pull llama3:8b      
 ```
