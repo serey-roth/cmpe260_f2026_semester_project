@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.webshop.webshop_minimal import WebAgentTextEnv, init_basedir
+from webshop_minimal import WebAgentTextEnv, init_basedir
 from ollama import Client
 
 ACTION_PATTERN = re.compile(r"(search|click)\[(.+?)\]", re.IGNORECASE | re.DOTALL)
