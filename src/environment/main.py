@@ -92,8 +92,6 @@ class WebshopAgent:
         record = {
             "goal_idx": goal_idx,
             "instruction": instruction,
-            "model": agent.model,
-            "prompt": prompt,
             "reward": reward,
             "done": done,
             "num_steps": len(steps),
