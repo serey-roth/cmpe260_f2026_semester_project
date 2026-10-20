@@ -3391,6 +3391,7 @@ dependencies = [
     { name = "spacy" },
     { name = "thefuzz" },
     { name = "torch" },
+    { name = "webshop-minimal" },
 ]
 
 [package.metadata]
@@ -3412,6 +3413,7 @@ requires-dist = [
     { name = "spacy", specifier = ">=3.8.16" },
     { name = "thefuzz", specifier = ">=0.22.1" },
     { name = "torch", specifier = ">=2.14.1" },
+    { name = "webshop-minimal", editable = "webshop" },
 ]
 
 [[package]]
@@ -4241,6 +4243,47 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/e5/e272bb9a045105a1fdf4b798d8086f5932a178f4d738f17a74f5c9e0ae9a/weasel-1.0.0.tar.gz", hash = "sha256:7b129b44c90cc543b760532974ca1e4eb30dad2aa2026f57bdce66354ae610fc", size = 38682, upload-time = "2026-03-20T08:10:25.266Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/07/57ebf7a6798b016c064bd0ca81b4c6a99daa4dc377b898bc7b41eb6b5af0/weasel-1.0.0-py3-none-any.whl", hash = "sha256:89518acee027f49d743126c3502d35e6dd14f5768be5c37c9af47c171b6005cc", size = 50713, upload-time = "2026-03-20T08:10:23.637Z" },
+]
+
+[[package]]
+name = "webshop-minimal"
+version = "0.1.0"
+source = { editable = "webshop" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "cleantext" },
+    { name = "faiss-cpu" },
+    { name = "flask" },
+    { name = "gdown" },
+    { name = "gym" },
+    { name = "html2text" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyserini" },
+    { name = "rank-bm25" },
+    { name = "rich" },
+    { name = "spacy" },
+    { name = "thefuzz" },
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beautifulsoup4" },
+    { name = "cleantext" },
+    { name = "faiss-cpu" },
+    { name = "flask" },
+    { name = "gdown" },
+    { name = "gym" },
+    { name = "html2text" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyserini" },
+    { name = "rank-bm25" },
+    { name = "rich" },
+    { name = "spacy" },
+    { name = "thefuzz" },
+    { name = "torch" },
 ]
 
 [[package]]
