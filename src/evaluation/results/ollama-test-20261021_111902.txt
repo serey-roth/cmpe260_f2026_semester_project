@@ -1,0 +1,16 @@
+Comprehensive Ollama Evaluation
+================================
+Status: blocked
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 15
+Duration seconds: 0.0
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": false,
+  "available_models": []
+}
+
+Reason: Start Ollama and pull the configured model before running this test.

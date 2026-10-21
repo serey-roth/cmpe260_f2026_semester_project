@@ -1,0 +1,79 @@
+Evaluation Performance Breakdown
+================================
+
+Run date
+--------
+The recorded test run completed in 6.69 seconds.
+
+Command
+-------
+KMP_DUPLICATE_LIB_OK=TRUE \
+JAVA_HOME=$(/usr/libexec/java_home) \
+python -m pytest \
+  src/evaluation/test_agent.py \
+  third_party/webshop/tests/web-agent-site/engine/test_normalize.py \
+  third_party/webshop/tests/web-agent-site/test_utils.py
+
+Overall results
+---------------
+Total tests:       13
+Passed:            13
+Failed:             0
+Skipped:            0
+Pass rate:        100%
+Wall-clock time:  6.69 seconds
+
+Results by suite
+----------------
+Evaluation unit tests:
+  Tests:             8
+  Passed:            8
+  Failed:            0
+  Pass rate:       100%
+  Purpose:           Validate WebshopAgent action parsing and step
+                     formatting without making Ollama requests.
+
+WebShop utility tests:
+  Tests:             5
+  Passed:            5
+  Failed:            0
+  Pass rate:       100%
+  Purpose:           Validate bundled WebShop normalization and utility
+                     behavior.
+
+Timing interpretation
+---------------------
+The full pytest process took 6.69 seconds. This includes Python startup,
+pytest collection, importing the WebShop, Torch, Pyserini, and spaCy-related
+modules, test execution, and test reporting.
+
+The individual test durations in the JUnit XML report are rounded to a very
+small value by pytest. Most individual tests are reported as 0.000 seconds,
+and two are reported as 0.001 seconds. These values should not be interpreted
+as exact timings. They indicate that the tests themselves are very fast and
+that most of the measured runtime comes from process startup and imports.
+
+Performance conclusion
+----------------------
+This is a fast offline evaluation suite:
+
+  - Suitable for running during development or before each commit.
+  - Does not start an Ollama model or execute a full shopping episode.
+  - Does not measure model inference latency.
+  - The current baseline is approximately 6.7 seconds per fresh test process
+    on the machine used for this run.
+
+Comparison with end-to-end runs
+--------------------------------
+These tests are not representative of the runtime of the Ollama-backed
+baseline agent. The baseline agent can take approximately 1-5 minutes for a
+complete episode because it may make up to 15 model requests. A first Ollama
+run can take an additional 10-60 seconds while the model loads.
+
+Related files
+-------------
+  - test-run.log: human-readable pytest output
+  - test-results.xml: JUnit-compatible test report
+  - test-summary.json: machine-readable test summary
+  - test-results.png: test outcome visualization
+  - test-results.svg: vector version of the visualization
