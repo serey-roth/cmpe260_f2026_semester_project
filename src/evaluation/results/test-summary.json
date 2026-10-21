@@ -1,0 +1,75 @@
+{
+  "total": 13,
+  "passed": 13,
+  "failed": 0,
+  "skipped": 0,
+  "total_duration_seconds": 0.002,
+  "tests": [
+    {
+      "name": "src.evaluation.test_agent.test_parse_action_extracts_search_query",
+      "duration_seconds": 0.001,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_parse_action_normalizes_clickable_to_lowercase",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_parse_action_supports_search_without_brackets",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_parse_action_prefers_longest_clickable_match",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_parse_action_returns_empty_click_for_unrecognized_reply",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_format_step[details0-  step 2: click[b001] -> Blue headphones ($19.99)]",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_format_step[details1-  step 3: click[blue] -> option color = blue]",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "src.evaluation.test_agent.test_format_step[details2-  step 4: click[next >]]",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "third_party.webshop.tests.web-agent-site.engine.test_normalize.test_normalize_color",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "third_party.webshop.tests.web-agent-site.engine.test_normalize.test_normalize_color_size",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "third_party.webshop.tests.web-agent-site.test_utils.test_random_idx",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    },
+    {
+      "name": "third_party.webshop.tests.web-agent-site.test_utils.test_setup_logger",
+      "duration_seconds": 0.001,
+      "status": "passed"
+    },
+    {
+      "name": "third_party.webshop.tests.web-agent-site.test_utils.test_generate_mturk_code",
+      "duration_seconds": 0.0,
+      "status": "passed"
+    }
+  ],
+  "wall_clock_seconds": 6.69
+}

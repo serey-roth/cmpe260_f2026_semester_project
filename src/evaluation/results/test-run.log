@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/ramakrishnamaladi/Desktop/SJSU_Work/CMPE-260-Work/cmpe260_f2026_semester_project
+configfile: pyproject.toml
+plugins: anyio-4.15.1, requests-mock-1.12.1, platformdirs-4.13.5
+collected 13 items
+
+src/evaluation/test_agent.py ........                                    [ 61%]
+third_party/webshop/tests/web-agent-site/engine/test_normalize.py ..     [ 76%]
+third_party/webshop/tests/web-agent-site/test_utils.py ...               [100%]
+
+- generated xml file: /Users/ramakrishnamaladi/Desktop/SJSU_Work/CMPE-260-Work/cmpe260_f2026_semester_project/src/evaluation/results/test-results.xml -
+============================== slowest durations ===============================
+
+(39 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 13 passed in 6.69s ==============================

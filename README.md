@@ -88,6 +88,36 @@ The bundled tests belong to the separate Princeton WebShop source under
 `third_party/webshop`; the application itself uses the `webshop-minimal`
 package installed from `./webshop`.
 
+## Evaluation tests
+
+Fast, offline unit tests for the baseline agent are in
+`src/evaluation/test_agent.py`. They test action parsing and step formatting
+without starting WebShop or making Ollama requests:
+
+```bash
+python -m pytest src/evaluation/test_agent.py
+```
+
+These tests should normally take **about 1-3 seconds**. The first run in a
+fresh Python process may take a few additional seconds while Torch, Pyserini,
+and the WebShop package are imported.
+
+For a small environment smoke test, use the Python interpreter after setting
+the Java and macOS variables above:
+
+```bash
+python -c "from webshop_minimal import WebAgentTextEnv, init_basedir; init_basedir('small'); env = WebAgentTextEnv(observation_mode='text_rich', human_goals=True); env.reset(session=0); print('environment reset: OK'); print('clickables:', len(env.get_available_actions()['clickables']))"
+```
+
+The environment smoke test does not call Ollama and should take **about
+2-10 seconds**, depending primarily on Pyserini and local disk speed.
+
+An Ollama-backed evaluation should be treated as an integration test rather
+than a unit test. One model action usually takes roughly **5-30 seconds** on
+Apple Silicon, so a one-action smoke test is typically **10-45 seconds**
+including startup. A complete 15-action episode can take **1-5 minutes**,
+with the first run sometimes adding **10-60 seconds** while the model loads.
+
 ### Ollama
 
 The baseline agent in `src/environment/main.py` calls a local model through [Ollama](https://ollama.com/download).
