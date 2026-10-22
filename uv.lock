@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -3382,6 +3382,7 @@ dependencies = [
     { name = "gdown" },
     { name = "gym" },
     { name = "html2text" },
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "ollama" },
     { name = "pandas" },
@@ -3404,6 +3405,7 @@ requires-dist = [
     { name = "gdown", specifier = ">=6.4.2" },
     { name = "gym", specifier = ">=0.26.2" },
     { name = "html2text", specifier = ">=2025.4.15" },
+    { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "ollama", specifier = ">=0.6.3" },
     { name = "pandas", specifier = ">=3.0.6" },

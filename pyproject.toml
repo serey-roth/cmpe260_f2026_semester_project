@@ -16,6 +16,7 @@ dependencies = [
     "gdown>=6.4.2",
     "gym>=0.26.2",
     "html2text>=2025.4.15",
+    "matplotlib>=3.11.2",
     "numpy>=2.5.4",
     "ollama>=0.6.3",
     "pandas>=3.0.6",

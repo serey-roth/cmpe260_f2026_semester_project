@@ -68,7 +68,7 @@ class WebshopAgent:
         
         for step in range(1, max_steps + 1):
             available_actions = self.env.get_available_actions()
-            action, reply, prompt = self.act(instruction, obs, available_actions, history)
+            action, reply, prompt = self.act(instruction, obs, available_actions, history, max_steps)
             details = self._get_action_details( action)
             
             print(self.format_step(step, action, details))
@@ -113,13 +113,14 @@ class WebshopAgent:
         observations,
         available_actions,
         history=(),
+        max_steps=MAX_STEPS,
     ) -> tuple[str, str, str]:
         clickables = available_actions["clickables"]
         search_hint = (
             "search[<keywords>] is allowed." if available_actions["has_search_bar"] else "search is not allowed on this page."
         )
         recent = "\n".join(history[-5:]) or "(none)"
-        steps_left = MAX_STEPS - len(history)
+        steps_left = max_steps - len(history)
 
         prompt = PROMPT_TEMPLATE.format(
             user_request=user_request,
