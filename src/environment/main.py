@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -45,9 +46,11 @@ Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]
 MAX_STEPS = 15
 
 class WebshopAgent:
-    def __init__(self):
-        self.client = Client()
-        self.model = "llama3:8b"
+    def __init__(self, model: str | None = None, client: Client | None = None):
+        self.client = client or Client(
+            host=os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+        )
+        self.model = model or os.environ.get("OLLAMA_MODEL", "llama3:8b")
         
         self.env = WebAgentTextEnv(observation_mode="text_rich", human_goals=True)
         
