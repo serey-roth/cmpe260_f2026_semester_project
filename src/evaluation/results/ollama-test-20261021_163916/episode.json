@@ -1,0 +1,19 @@
+{
+  "test": "comprehensive_ollama_episode",
+  "started_at": "2026-10-21T23:39:12.236571+00:00",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "llama3:8b",
+  "goal_index": 0,
+  "max_steps": 5,
+  "readiness": {
+    "service_available": true,
+    "model_available": true,
+    "available_models": [
+      "llama3:8b"
+    ]
+  },
+  "status": "error",
+  "error": "AttributeError: 'WebAgentTextEnv' object has no attribute 'product_item_dict'",
+  "finished_at": "2026-10-21T23:39:16.074939+00:00",
+  "duration_seconds": 0.0
+}

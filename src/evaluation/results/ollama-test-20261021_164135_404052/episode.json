@@ -1,0 +1,78 @@
+{
+  "test": "comprehensive_ollama_episode",
+  "started_at": "2026-10-21T23:41:34.391205+00:00",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "llama3:8b",
+  "goal_index": 0,
+  "max_steps": 1,
+  "readiness": {
+    "service_available": true,
+    "model_available": true,
+    "available_models": [
+      "llama3:8b"
+    ]
+  },
+  "status": "completed_without_purchase",
+  "duration_seconds": 1.009,
+  "episode": {
+    "goal_idx": 0,
+    "instruction": "Instruction: i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 60.00 dollars",
+    "reward": 0.0,
+    "done": false,
+    "num_steps": 1,
+    "reward_info": null,
+    "steps": [
+      {
+        "step": 1,
+        "observation": "WebShop\nInstruction: \ni need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 60.00 dollars\n[button] Search [button_]\n",
+        "reply": "search[Cleveland University Drawstring Shorts]",
+        "action": "search[Cleveland University Drawstring Shorts]",
+        "details": {
+          "type": "search",
+          "query": "Cleveland University Drawstring Shorts"
+        },
+        "reward": 0.0,
+        "done": false
+      }
+    ],
+    "verification": {
+      "prompt": "i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 60.00 dollars",
+      "requested": {
+        "asin": "B09HX5CD2D",
+        "query": "men's shorts",
+        "category": "fashion",
+        "product_category": "",
+        "attributes": [
+          "officially licensed",
+          "machine wash",
+          "drawstring closure"
+        ],
+        "options": [
+          "heather charcoal",
+          "small"
+        ],
+        "price_upper": 60.0
+      },
+      "purchase": {
+        "asin": null,
+        "title": null,
+        "price": null,
+        "selected_options": {},
+        "attributes": [],
+        "category": null,
+        "product_category": null,
+        "query": null,
+        "bullet_points": [],
+        "description": null
+      },
+      "match": {
+        "product_type": false,
+        "attributes": false,
+        "options": true,
+        "price": false,
+        "overall": false
+      }
+    }
+  },
+  "finished_at": "2026-10-21T23:41:35.404044+00:00"
+}

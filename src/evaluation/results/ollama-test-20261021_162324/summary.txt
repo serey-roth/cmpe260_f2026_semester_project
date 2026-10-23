@@ -1,0 +1,21 @@
+Comprehensive Ollama Evaluation
+================================
+Status: completed_without_purchase
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 1
+Duration seconds: 3.385
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": true,
+  "available_models": [
+    "llama3:8b"
+  ]
+}
+
+Episode:
+  Done: False
+  Reward: 0.0
+  Steps: 1

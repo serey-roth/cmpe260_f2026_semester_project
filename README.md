@@ -118,6 +118,12 @@ Apple Silicon, so a one-action smoke test is typically **10-45 seconds**
 including startup. A complete 15-action episode can take **1-5 minutes**,
 with the first run sometimes adding **10-60 seconds** while the model loads.
 
+Each evaluation writes a timestamped subfolder under
+`src/evaluation/results/`. Each episode folder contains `episode.json` and
+`summary.txt`. The JSON log records the prompt, requested attributes and
+options, purchased product attributes and selected options, and verification
+booleans for product type, attributes, options, price, and the overall match.
+
 ### Ollama
 
 The baseline agent in `src/environment/main.py` calls a local model through [Ollama](https://ollama.com/download).

@@ -1,0 +1,31 @@
+Comprehensive Ollama Evaluation
+================================
+Status: completed_without_purchase
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 1
+Duration seconds: 1.009
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": true,
+  "available_models": [
+    "llama3:8b"
+  ]
+}
+
+Episode:
+  Done: False
+  Reward: 0.0
+  Steps: 1
+
+Verification:
+  Prompt: i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 60.00 dollars
+  Purchased: None
+  Price: None
+  Selected options: {}
+  Attributes match: False
+  Options match: True
+  Price match: False
+  Overall match: False

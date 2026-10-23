@@ -1,0 +1,18 @@
+Comprehensive Ollama Evaluation
+================================
+Status: error
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 1
+Duration seconds: 0.0
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": true,
+  "available_models": [
+    "llama3:8b"
+  ]
+}
+
+Error: AttributeError: 'WebAgentTextEnv' object has no attribute 'user_sessions'

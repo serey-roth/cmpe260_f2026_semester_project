@@ -1,0 +1,21 @@
+Comprehensive Ollama Evaluation
+================================
+Status: passed
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 15
+Duration seconds: 3.016
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": true,
+  "available_models": [
+    "llama3:8b"
+  ]
+}
+
+Episode:
+  Done: True
+  Reward: 0.6666666666666666
+  Steps: 3

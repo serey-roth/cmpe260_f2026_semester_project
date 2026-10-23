@@ -1,0 +1,17 @@
+{
+  "test": "comprehensive_ollama_episode",
+  "started_at": "2026-10-21T23:21:24.536215+00:00",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "llama3:8b",
+  "goal_index": 0,
+  "max_steps": 1,
+  "readiness": {
+    "service_available": true,
+    "model_available": false,
+    "available_models": []
+  },
+  "status": "blocked",
+  "reason": "Start Ollama and pull the configured model before running this test.",
+  "finished_at": "2026-10-21T23:21:24.537164+00:00",
+  "duration_seconds": 0.0
+}

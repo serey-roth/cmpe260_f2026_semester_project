@@ -1,0 +1,135 @@
+{
+  "test": "comprehensive_ollama_episode",
+  "started_at": "2026-10-21T23:39:27.964289+00:00",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "llama3:8b",
+  "goal_index": 0,
+  "max_steps": 5,
+  "readiness": {
+    "service_available": true,
+    "model_available": true,
+    "available_models": [
+      "llama3:8b"
+    ]
+  },
+  "status": "passed",
+  "duration_seconds": 3.695,
+  "episode": {
+    "goal_idx": 0,
+    "instruction": "Instruction: i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars",
+    "reward": 0.6666666666666666,
+    "done": true,
+    "num_steps": 3,
+    "reward_info": {
+      "r_type": 1.0,
+      "r_att": 1.0,
+      "w_att": 0.5,
+      "query_match": true,
+      "category_match": false,
+      "title_score": 1.0,
+      "r_option": 0.0,
+      "w_option": 0.3333333333333333,
+      "r_price": true,
+      "w_price": 0.16666666666666666
+    },
+    "steps": [
+      {
+        "step": 1,
+        "observation": "WebShop\nInstruction: \ni need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars\n[button] Search [button_]\n",
+        "reply": "search[Cleveland University Drawstring Shorts]",
+        "action": "search[Cleveland University Drawstring Shorts]",
+        "details": {
+          "type": "search",
+          "query": "Cleveland University Drawstring Shorts"
+        },
+        "reward": 0.0,
+        "done": false
+      },
+      {
+        "step": 2,
+        "observation": "Instruction:\ni need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars\n[button] Back to Search [button_]\nPage 1 (Total results: 50)\n[button] Next > [button_]\n\n[button] B09HX5CD2D [button_]\nCSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal\n$39.95\n\n[button] B09Q5ZHRVM [button_]\nYinimo Mens Gym Shorts Fashionable Loose Beach Drawstring Turkey Print Beach Cool Shorts\n$19.19\n\n[button] B09RK77R3V [button_]\nGym Shorts For Men Quick Dry Lightweight Training Running Jogger Drawstring Pockets Solid Zipper Shorts\n$8.29 to $10.79\n\n[button] B09S3BN15C [button_]\nMens Linen Shirt,Men's Striped Shirts Casual Short Sleeve Button Down Shirts Regular Fit Hawaiian Shirts Beach Tees Tops\n$3.78 to $11.38\n\n[button] B08L373FLK [button_]\nAthletic Works Women's Commuter Shorts (XS 0-2\n$13.21\n\n[button] B09QCVCYVY [button_]\nBurband Womens High Waist Bike Shorts Tummy Control Workout Yoga Pants Running Exercise Running Shorts with Side Pockets\n$6.82\n\n[button] B093HFSQ3B [button_]\nQAZPL Drawstring Ponytail Hair, Afro Kinky Curly, Human Hair, Wig For Women, 8-20 Inch #1B Natural Black, Support Perm Or Dye (Size : 8 inch)\n$47.78\n\n[button] B08QSNM69H [button_]\n4K HDMI Cables, Short Cord, 1ft [3 Pack] Braided Cord & Gold Connectors, 1ft High-Speed HDMI 2.0 with Ethernet, for Playstation PS5, PS4, PS3, Xbox, Roku, Apple TV, HDTV, Blu-ray, Laptop, PC, Monitor\n$15.49\n\n[button] B075ZH94L7 [button_]\nRCA Universal Palm Size 3Device DVD VCR TV Remote Control RCU403\n$100.0\n\n[button] B07ZYVWCZ7 [button_]\nUniversal TV Stand/ Base Tabletop TV Stand with Wall Mount for 40 to 86 inch 5 Level Height Adjustable, Heavy Duty Tempered Glass Base, Holds up to 132lbs Screens, HT03B-003\n$73.95\n",
+        "reply": "[click B09HX5CD2D]",
+        "action": "click[b09hx5cd2d]",
+        "details": {
+          "type": "product",
+          "asin": "B09HX5CD2D",
+          "title": "CSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal",
+          "price": 39.95
+        },
+        "reward": 0.0,
+        "done": false
+      },
+      {
+        "step": 3,
+        "observation": "Instruction:\ni need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars\n[button] Back to Search [button_]\n[button] < Prev [button_]\ncolor\n  [button] heather charcoal [button_]\n  [button] heather grey [button_]\nsize\n  [button] small [button_]\n  [button] medium [button_]\n  [button] large [button_]\n  [button] x-large [button_]\n  [button] xx-large [button_]\nCSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal\nPrice: $39.95\nRating: N.A.\n[button] Description [button_]\n[button] Features [button_]\n[button] Reviews [button_]\n[button] Buy Now [button_]\n",
+        "reply": "click[buy now]",
+        "action": "click[buy now]",
+        "details": {
+          "type": "nav",
+          "target": "buy now"
+        },
+        "reward": 0.6666666666666666,
+        "done": true
+      }
+    ],
+    "purchase": {
+      "asin": "B09HX5CD2D",
+      "title": "CSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal",
+      "price": 39.95,
+      "options": {}
+    },
+    "verification": {
+      "prompt": "i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars",
+      "requested": {
+        "asin": "B09HX5CD2D",
+        "query": "men's shorts",
+        "category": "fashion",
+        "product_category": "",
+        "attributes": [
+          "officially licensed",
+          "machine wash",
+          "drawstring closure"
+        ],
+        "options": [
+          "heather charcoal",
+          "small"
+        ],
+        "price_upper": 70.0
+      },
+      "purchase": {
+        "asin": "B09HX5CD2D",
+        "title": "CSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal",
+        "price": 39.95,
+        "selected_options": {},
+        "attributes": [
+          "drawstring closure",
+          "elastic waistband",
+          "officially licensed",
+          "machine wash"
+        ],
+        "category": "fashion",
+        "product_category": "",
+        "query": "men's shorts",
+        "bullet_points": [
+          "Made in USA and Imported ",
+          "Drawstring closure ",
+          "Machine Wash ",
+          "Sizing: Men's Size but can be unisex. See Size Chart in image gallery and pick from Small, Medium, Large, XL, XXL. ",
+          "Assorted Colors Based on Colleges - Choose from favorites like Heather Grey, Heather Charcoal, and Navy. You will want to get them all! ",
+          "Elastic Waistband wiith Drawstrings and side-angled pockets make for a perfect fit! ",
+          "Material: 65% Cotton / 35% Polyester is extremely soft, comfortable, with a stylish look. ",
+          "College Logo Digitally Printed in USA and Officially Licensed by W Republic Apparel - Wear your school spirit with pride! "
+        ],
+        "description": "CSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal The College Fleece Shorts feature a classic logo imprint of your college. They are soft and durable with an elastic waistband with drawstrings for a secure fit and side-angled pockets. Be sure to show off your school pride and team spirit!These comfortable shorts are great to wear around campus or even to bed! Keep you warm during the cold seasons, but cool enough to wear to class, when you are out and about, or just playing ball on the court! Every leg is a slam dunk, thanks to our stylish college fleece shorts.They come in cool colors such as heather grey, charcoal, and navy, depending on the school. While they are sized for men, they are unisex and women can wear them too! Just pick your size.You know what they say, \"if you can't beat 'em, join 'em.\" Now even if your squad didn't win the championship parade last weekend, at least you can still represent your school's spirit with these awesome fleece shorts!Look like your favorite team at home with these comfortable fleece shorts. One of the most sought-after styles around, they will surely impress!Great NCAA Clothing and Apparel Gift Idea for students, grads, college sports fans, alumni, teams and teammates, coaches, parents, mom, dad, friends, fraternity, sorority, club, group, and family! Great to give as a gift for occasions like Christmas, back to school, open house, gym, practice, daily wear, or to celebrate graduation, father's day, holidays, birthdays, and more."
+      },
+      "match": {
+        "product_type": true,
+        "attributes": true,
+        "options": false,
+        "price": true,
+        "overall": false
+      }
+    }
+  },
+  "finished_at": "2026-10-21T23:39:31.660530+00:00"
+}

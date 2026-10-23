@@ -1,0 +1,31 @@
+Comprehensive Ollama Evaluation
+================================
+Status: passed
+Model: llama3:8b
+Goal index: 0
+Maximum steps: 5
+Duration seconds: 3.695
+
+Readiness:
+{
+  "service_available": true,
+  "model_available": true,
+  "available_models": [
+    "llama3:8b"
+  ]
+}
+
+Episode:
+  Done: True
+  Reward: 0.6666666666666666
+  Steps: 3
+
+Verification:
+  Prompt: i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars
+  Purchased: CSU Cleveland State University Vikings Property Fleece Drawstring Shorts Heather Charcoal
+  Price: 39.95
+  Selected options: {}
+  Attributes match: True
+  Options match: False
+  Price match: True
+  Overall match: False

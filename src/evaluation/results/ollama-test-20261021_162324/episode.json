@@ -1,0 +1,40 @@
+{
+  "test": "comprehensive_ollama_episode",
+  "started_at": "2026-10-21T23:23:20.975860+00:00",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "llama3:8b",
+  "goal_index": 0,
+  "max_steps": 1,
+  "readiness": {
+    "service_available": true,
+    "model_available": true,
+    "available_models": [
+      "llama3:8b"
+    ]
+  },
+  "status": "completed_without_purchase",
+  "duration_seconds": 3.385,
+  "episode": {
+    "goal_idx": 0,
+    "instruction": "Instruction: i need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars",
+    "reward": 0.0,
+    "done": false,
+    "num_steps": 1,
+    "reward_info": null,
+    "steps": [
+      {
+        "step": 1,
+        "observation": "WebShop\nInstruction: \ni need some draw string shorts that are official cleveland university. the need to be small and charcoal along with being machine washable, and price lower than 70.00 dollars\n[button] Search [button_]\n",
+        "reply": "search[Cleveland University Drawstring Shorts]",
+        "action": "search[Cleveland University Drawstring Shorts]",
+        "details": {
+          "type": "search",
+          "query": "Cleveland University Drawstring Shorts"
+        },
+        "reward": 0.0,
+        "done": false
+      }
+    ]
+  },
+  "finished_at": "2026-10-21T23:23:24.363226+00:00"
+}
