@@ -1,0 +1,16 @@
+{
+  "episodes": 5,
+  "errors": 0,
+  "mean_reward": 0.41666666666666663,
+  "success_rate (reward==1)": 0.0,
+  "buy_rate (clicked buy now)": 0.8,
+  "mean_steps": 5.4,
+  "median_steps": 3,
+  "mean_steps_when_bought": 3,
+  "mean_reward_when_bought": 0.5208333333333333,
+  "mean_duration_s": 26.628,
+  "mean_r_type (n=4)": 1.0,
+  "mean_r_att (n=4)": 0.75,
+  "mean_r_option (n=4)": 0.0,
+  "mean_r_price (n=4)": 1.0
+}
