@@ -9,3 +9,6 @@ __pycache__/
 build/
 dist/
 **/logs/
+*.jsonl
+src/data/webshop-data/
+src/data/search-index/

@@ -4,7 +4,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from webshop_minimal import WebAgentTextEnv, init_basedir
+from src.data.search_index import INDEX_DIR
+from src.data.splits import DATA_DIR, SEED
+from src.environment.env import build_env
+from webshop_minimal import WebAgentTextEnv
 from ollama import Client
 
 ACTION_PATTERN = re.compile(r"(search|click)\[(.+?)\]", re.IGNORECASE | re.DOTALL)
@@ -45,11 +48,10 @@ Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]
 MAX_STEPS = 15
 
 class WebshopAgent:
-    def __init__(self):
+    def __init__(self, env: WebAgentTextEnv):
         self.client = Client()
         self.model = "llama3:8b"
-        
-        self.env = WebAgentTextEnv(observation_mode="text_rich", human_goals=True)
+        self.env = env
         
     def run_episode(
         self,
@@ -68,7 +70,7 @@ class WebshopAgent:
         
         for step in range(1, max_steps + 1):
             available_actions = self.env.get_available_actions()
-            action, reply, prompt = self.act(instruction, obs, available_actions, history, max_steps)
+            action, reply = self.act(instruction, obs, available_actions, history, max_steps)
             details = self._get_action_details( action)
             
             print(self.format_step(step, action, details))
@@ -114,7 +116,7 @@ class WebshopAgent:
         available_actions,
         history=(),
         max_steps=MAX_STEPS,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str, str]:
         clickables = available_actions["clickables"]
         search_hint = (
             "search[<keywords>] is allowed." if available_actions["has_search_bar"] else "search is not allowed on this page."
@@ -139,7 +141,7 @@ class WebshopAgent:
         reply = response["response"]
         
         action = self.parse_action(reply, available_actions)
-        return action, reply, prompt # TODO: obfuscate prompt
+        return action, reply
 
     @staticmethod
     def parse_action(text, available_actions) -> str:
@@ -204,11 +206,15 @@ class WebshopAgent:
             "options": dict(session["options"]),
         }
 
-EPISODE_LOG_DIR = Path("src/environment/logs")
+EPISODE_LOG_DIR = Path(__file__).parent / "logs"
 
 if __name__ == "__main__":
-    init_basedir("small")
-    agent = WebshopAgent()
+    env = build_env(
+        data_dir=DATA_DIR,
+        seed=SEED,
+        index_dir=INDEX_DIR / "index"
+    )
+    agent = WebshopAgent(env=env)
 
     EPISODE_LOG_DIR.mkdir(exist_ok=True)
     
