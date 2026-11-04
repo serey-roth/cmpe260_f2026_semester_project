@@ -1,5 +1,6 @@
 import json
 import re
+import textwrap
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -8,9 +9,12 @@ from src.data.search_index import INDEX_DIR
 from src.data.splits import DATA_DIR, SEED
 from src.environment.env import build_env
 from webshop_minimal import WebAgentTextEnv
+import httpx
 from ollama import Client
 
 ACTION_PATTERN = re.compile(r"(search|click)\[(.+?)\]", re.IGNORECASE | re.DOTALL)
+THINK_PATTERN = re.compile(r"<(think|reasoning)>(.*?)(?:</\1>|$)", re.IGNORECASE | re.DOTALL)
+THINK_END_PATTERN = re.compile(r"</(?:think|reasoning)>", re.IGNORECASE)
 
 PROMPT_TEMPLATE = """
 You are a personal shopper browsing an ecommerce website. Find and buy the product that best matches the user's request.
@@ -24,8 +28,10 @@ The best match MUST satisfy the following conditions:
 How to proceed:
 - On a search results page, compare titles and prices, then click the ASIN of the best match. Use next > only if nothing fits.
 - On a product page, select the requested options. Once the product fits the request and its options are selected, click[buy now].
+- Options reset when you leave a product page. Only options shown as [clicked button] on the current page are selected.
 - "< prev" and "back to search" leave the current page. Only use them if this product does not fit the request.
-- Do not reopen a product you already looked at unless you are choosing between products.
+- Do not reopen a product you already looked at UNLESS you are choosing between products.
+- Buy the product as soon as the product fits and the desired options are selected. DO NOT SEARCH AGAIN FOR SOMETHING BETTER.
 
 User request: 
 {user_request}
@@ -37,20 +43,44 @@ Valid actions on this page:
 - {search_hint}
 - click[<value>] where <value> is exactly one of: {clickables}
 
-Your recent actions: 
+Your actions so far: 
 {recent_history}
 You have {remaining_steps} actions left, and the task only counts if you finish by clicking buy now.
 
-Reply with exactly one action and nothing else, and ALWAYS include the square brackets.
-Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]
+{reply_format}
 """
 
-MAX_STEPS = 15
+DIRECT_REPLY_FORMAT = """Reply with exactly one action and nothing else, and ALWAYS include the square brackets.
+Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]"""
+
+COT_REPLY_FORMAT = """First reason briefly inside <reasoning></reasoning> tags, then write exactly one action on the line after </reasoning>.
+In your reasoning, compare the user request with the current page: Is this the right product? Which requested options are already selected and which are still missing? Is the price within the limit?
+The action must be written as: search[<keywords>] or click[<value>].
+
+Example reply on a product page:
+<reasoning>
+This is a black relaxed-fit sweatpant under $40, which matches. The request asks for black and xx-large. Neither is selected yet, so I select black first.
+</reasoning>
+click[black]
+
+Example reply on the search page:
+<reasoning>
+I have not searched yet, so I search for the key words of the request.
+</reasoning>
+search[xx-large black relaxed fit workout sweatpants]"""
+
+REPLY_FORMATS = {"direct": DIRECT_REPLY_FORMAT, "cot": COT_REPLY_FORMAT}
+
+MAX_STEPS = 25
+MAX_RETRIES = 5
 
 class WebshopAgent:
-    def __init__(self, env: WebAgentTextEnv):
-        self.client = Client()
-        self.model = "llama3:8b"
+    def __init__(self, env: WebAgentTextEnv, model: str = "llama3:8b", prompt_style: str = "direct"):
+        if prompt_style not in REPLY_FORMATS:
+            raise ValueError(f"prompt_style must be one of {list(REPLY_FORMATS)}")
+        self.client = Client(timeout=120)
+        self.model = model
+        self.prompt_style = prompt_style
         self.env = env
         
     def run_episode(
@@ -72,14 +102,18 @@ class WebshopAgent:
             available_actions = self.env.get_available_actions()
             action, reply = self.act(instruction, obs, available_actions, history)
             details = self._get_action_details( action)
-            
+            thought = self.extract_thought(reply)
+
             print(self.format_step(step, action, details))
-    
+            if thought:
+                print(textwrap.indent(textwrap.fill(thought, width=110), "      | "))
+
             next_obs, reward, done, info = self.env.step(action)
             steps.append({
                 "step": step,
                 "observation": obs,
                 "reply": reply,
+                "thought": thought,
                 "action": action,
                 "details": details,
                 "reward": reward,
@@ -120,7 +154,7 @@ class WebshopAgent:
         search_hint = (
             "search[<keywords>] is allowed." if available_actions["has_search_bar"] else "search is not allowed on this page."
         )
-        recent = "\n".join(history[-5:]) or "(none)"
+        recent = "\n".join(history) or "(none)"
         steps_left = MAX_STEPS - len(history)
 
         prompt = PROMPT_TEMPLATE.format(
@@ -129,18 +163,44 @@ class WebshopAgent:
             search_hint=search_hint,
             recent_history=recent,
             remaining_steps=steps_left,
-            clickables=clickables
+            clickables=clickables,
+            reply_format=REPLY_FORMATS[self.prompt_style],
         )
-
-        response = self.client.generate(
-            model=self.model,
-            prompt=prompt,
-            options={"temperature": 0, "num_ctx": 8192},
-        )
-        reply = response["response"]
         
-        action = self.parse_action(reply, available_actions)
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = self.client.generate(
+                    model=self.model,
+                    prompt=prompt,
+                    options={"temperature": 0, "num_ctx": 8192},
+                    # turn model default thinking off (too slow)
+                    # use cot prompt instead
+                    think=False,  
+                )
+                
+            except httpx.TimeoutException:
+                print(f"  agent timed out (attempt {attempt}/{MAX_RETRIES})")
+                continue
+
+            reply = response["response"]
+            if response.get("thinking"):  # keep it in the log if a model thinks anyway
+                reply = f"<think>\n{response['thinking']}\n</think>\n{reply}"
+            if reply.strip():
+                break
+            
+            print(f"  empty reply from {self.model} (attempt {attempt}/{MAX_RETRIES})")
+        else:
+            raise RuntimeError(f"no reply from {self.model} after {MAX_RETRIES} attempts")
+
+        # only parse the action after the reasoning tags
+        action_text = THINK_END_PATTERN.split(reply)[-1]
+        action = self.parse_action(action_text, available_actions)
         return action, reply
+
+    @staticmethod
+    def extract_thought(reply) -> str | None:
+        match = THINK_PATTERN.search(reply)
+        return match.group(2).strip() if match else None
 
     @staticmethod
     def parse_action(text, available_actions) -> str:
