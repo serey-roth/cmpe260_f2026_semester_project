@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -3413,7 +3413,7 @@ requires-dist = [
     { name = "spacy", specifier = ">=3.8.16" },
     { name = "thefuzz", specifier = ">=0.22.1" },
     { name = "torch", specifier = ">=2.14.1" },
-    { name = "webshop-minimal", editable = "webshop" },
+    { name = "webshop-minimal", directory = "webshop" },
 ]
 
 [[package]]
@@ -4248,7 +4248,7 @@ wheels = [
 [[package]]
 name = "webshop-minimal"
 version = "0.1.0"
-source = { editable = "webshop" }
+source = { directory = "webshop" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "cleantext" },

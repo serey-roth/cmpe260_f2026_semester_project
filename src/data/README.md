@@ -6,17 +6,23 @@ A goal is one shopping task: a human-written instruction plus the product it was
 
 ## What are the splits?
 
+The default project configuration uses the bundled `webshop-minimal` small
+dataset. It contains 13 human-written goals and already includes search
+indexes, so no download or index build is needed for a smoke test. Run
+`init_splits` once if you want to create `src/data/splits.jsonl` for the
+evaluation runner.
+
 WebShop's official split, by position in the environment's goal list (shuffled with a fixed seed):
 
 | Split | Positions | Goals |
 | --- | --- | --- |
-| test | 0 to 499 | 500 |
-| dev | 500 to 1499 | 998 |
-| train | 1500 to the end | 10,538 |
+| test | 0 to 499 | up to 13 |
+| dev | 500 to 1499 | 0 for the small dataset |
+| train | 1500 to the end | 0 for the small dataset |
 
 A task (same product, same instruction, same price cap) that appears in more than one split is kept only in the first of test, dev, train, so test is never reduced.
 
-## Download the catalog
+## Full-catalog data (optional)
 
 The Google Drive links in WebShop's setup script are dead so we download the full catalog from Hugging Face.
 

@@ -7,7 +7,7 @@ from webshop_minimal import WebAgentTextEnv
 from src.data.configuration import configure_data
 
 
-def build_env(data_dir: Path, seed: int, index_dir: Path | None = None, **env_kwargs) -> WebAgentTextEnv:
+def build_env(data_dir: Path | None, seed: int, index_dir: Path | None = None, **env_kwargs) -> WebAgentTextEnv:
     """Build the WebShop env on the catalog in `data_dir`, searching `index_dir` if given."""
     configure_data(data_dir, seed)
     if index_dir is not None:

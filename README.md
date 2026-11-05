@@ -14,15 +14,26 @@ cd rl-webshop
 uv sync
 ```
 
+On macOS, set the JDK and certificate bundle before running commands that
+import Pyserini:
+
+```bash
+export JAVA_HOME="$(/usr/libexec/java_home)"
+export SSL_CERT_FILE="$(uv run python -c 'import certifi; print(certifi.where())')"
+```
+
+`JAVA_HOME` is required because Pyserini starts a JVM. `SSL_CERT_FILE` avoids
+certificate errors when Pyserini loads its index metadata.
+
 ### Data
 
-The sample data that comes with WebShop (from [princeton-nlp/WebShop](https://github.com/princeton-nlp/WebShop)) is 1,000 products and gives only 13 human-written goals, which is not enough for RL training. The Google Drive links in WebShop's setup script for the full data are dead, so we:
+The default configuration uses the bundled 1,000-product dataset and
+prebuilt search index from
+[webshop-minimal](https://github.com/ZihanWang314/webshop-minimal). It does
+not require a download, split generation, or index-building step.
 
-1. download the entire catalog from Hugging Face (about 5.7 GB),
-2. generate the train/dev/test splits from it,
-3. build a search index for the catalog, because the indexes shipped with WebShop only cover 1,000 products, and point the environment at it (`build_env` in `src/environment/env.py`).
-
-Refer to [src/data/README.md](src/data/README.md) for data setup.
+The full-catalog setup remains available by passing a directory containing
+`items_shuffle.json` and `items_ins_v2.json` to the data configuration helpers.
 
 ### Ollama
 
@@ -36,10 +47,11 @@ ollama pull llama3:8b
 
 ## Run the baseline agent
 
-After the data setup above, from the repo root:
+From the repo root:
 
 ```bash
-uv run python -m src.agents.main
+uv run python -m src.evaluation.baseline --split test --n 1
 ```
 
-This builds the environment, runs the agent, and saves the episode as a `.jsonl` log in `src/agents/logs/`.
+This runs one bundled-dataset episode and saves the detailed episode log and
+summary under `src/agents/logs/` and `src/evaluation/runs/`.

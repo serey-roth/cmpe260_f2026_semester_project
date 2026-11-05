@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.agents.main import EPISODE_LOG_DIR, REPLY_FORMATS, WebshopAgent
 from src.data.search_index import INDEX_DIR
-from src.data.splits import DATA_DIR, SEED, load_splits
+from src.data.splits import DATA_DIR, SEED, SPLITS_PATH, init_splits, load_splits
 from src.environment.env import build_env
 
 EVAL_RUN_DIR = Path(__file__).parent / "runs"
@@ -19,8 +19,10 @@ if __name__ == "__main__":
     parser.add_argument("--resume", type=Path, default=None, help="episode log of an interrupted run; skips the goals it already has")
     args = parser.parse_args()
 
+    if not SPLITS_PATH.exists():
+        init_splits()
     rows = load_splits(split=args.split)[:args.n]
-    env = build_env(data_dir=DATA_DIR, seed=SEED, index_dir=INDEX_DIR / "index")
+    env = build_env(data_dir=DATA_DIR, seed=SEED)
     agent = WebshopAgent(env=env, model=args.model, prompt_style=args.prompt)
 
     timestamp = datetime.now()

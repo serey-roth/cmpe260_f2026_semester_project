@@ -5,7 +5,7 @@ from pathlib import Path
 from src.data.configuration import configure_data
 from webshop_minimal import WebAgentTextEnv
 
-DATA_DIR = Path(__file__).parent / "webshop-data"  # see README.md for how to download it
+DATA_DIR = None  # Use webshop-minimal's bundled small dataset by default.
 SPLITS_PATH = Path(__file__).parent / "splits.jsonl"
 SEED = 233 # env random seed number
 
@@ -27,7 +27,7 @@ def split_goals(goals: list[dict]) -> tuple[dict[str, list[int]], dict[str, int]
     splits, removed, claimed = {}, {}, set()
     for name in SPLIT_PRIORITY:
         lo, hi = SPLIT_RANGES[name]
-        idxs = range(lo, len(goals) if hi is None else hi)
+        idxs = range(lo, len(goals) if hi is None else min(hi, len(goals)))
         splits[name] = [i for i in idxs if goal_task(goals[i]) not in claimed]
         removed[name] = len(idxs) - len(splits[name])
         claimed |= {goal_task(goals[i]) for i in splits[name]}
@@ -88,4 +88,3 @@ def get_dev_splits():
 
 def get_test_splits():
     return load_splits(split="test")
-
