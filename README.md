@@ -39,7 +39,7 @@ ollama pull llama3:8b
 After the data setup above, from the repo root:
 
 ```bash
-uv run python -m src.agents.main
+uv run python -m src.evaluation.baseline --split dev --n 1
 ```
 
-This builds the environment, runs the agent, and saves the episode as a `.jsonl` log in `src/agents/logs/`.
+This builds the environment, runs the agent, and saves the episodes as a `.jsonl` log in `src/agents/logs/` and a summary in `src/evaluation/runs/`.
