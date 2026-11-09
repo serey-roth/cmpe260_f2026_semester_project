@@ -55,3 +55,50 @@ uv run python -m src.evaluation.baseline --split test --n 1
 
 This runs one bundled-dataset episode and saves the detailed episode log and
 summary under `src/agents/logs/` and `src/evaluation/runs/`.
+
+## Preliminary baseline results (local GPU-backed setup)
+
+The following summary is from a 10-episode test batch run on the local machine
+with the Ollama model `llama3.2:3b` and the direct prompt style.
+
+| Date | Model | Split | Episodes | Avg reward | Success rate | Purchase rate | Avg steps | Notes |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 2026-11-07 | `llama3.2:3b` | `test` | 10 | 0.1033 | 0.0000 | 0.3000 | 20.1 | Local GPU-backed Ollama inference on RTX 4070 |
+
+The run finished with the following metrics:
+
+```json
+{
+  "type": "baseline_single_agent",
+  "model": "llama3.2:3b",
+  "prompt": "direct",
+  "split": "test",
+  "num_goals": 10,
+  "timestamp": "20261107_125609",
+  "average_reward": 0.10333333333333332,
+  "average_steps": 20.1,
+  "success_rate": 0.0,
+  "purchase_rate": 0.3,
+  "option_score": 0.0
+}
+```
+
+## Multi-model comparison on the same WebShop batch
+
+The following comparison uses the same 3-goal test batch, direct prompt style,
+and the same local GPU-backed Ollama setup for each model.
+
+> Note: T5 and Flan are not available in the local Ollama catalog on this machine, so the family comparison here is limited to the models that were actually installed and benchmarked through the project’s Ollama interface.
+
+| Model | Family | Episodes | Avg reward | Success rate | Purchase rate | Avg steps | Notes |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| `llama3.2:3b` | Llama | 3 | 0.1111 | 0.0000 | 0.3333 | 19.0 | Small local Llama model |
+| `llama3.1:8b` | Llama | 3 | 0.3333 | 0.3333 | 0.3333 | 22.7 | Larger Llama model did best in the earlier run |
+| `gemma3:4b` | Gemma | 3 | 0.7778 | 0.3333 | 1.0000 | 4.7 | Best average reward on this fixed batch; very fast and bought consistently |
+| `qwen2.5:3b` | Qwen | 3 | 0.2222 | 0.0000 | 0.3333 | 17.7 | Strong search behavior, but often stalled before buying |
+
+On this fixed 3-goal batch, `gemma3:4b` achieved the best overall performance by a wide margin, with a higher average reward and much shorter average episode length than the Llama runs. `qwen2.5:3b` showed some promising browsing behavior but did not complete the task reliably enough to match the stronger Gemma and Llama results.
+
+If you want a true T5/Flan comparison, the next step is to run those models through a Hugging Face or vLLM endpoint instead of the current local Ollama-only setup, because the default Ollama registry here did not include T5/Flan variants.
+
+The detailed per-episode logs are saved under `src/evaluation/runs/`.

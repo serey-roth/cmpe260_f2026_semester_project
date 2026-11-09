@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import textwrap
 from datetime import datetime
@@ -75,10 +76,25 @@ MAX_STEPS = 25
 MAX_RETRIES = 5
 
 class WebshopAgent:
-    def __init__(self, env: WebAgentTextEnv, model: str = "llama3:8b", prompt_style: str = "direct"):
+    def __init__(
+        self,
+        env: WebAgentTextEnv,
+        model: str = "llama3:8b",
+        prompt_style: str = "direct",
+        provider: str | None = None,
+        api_base: str | None = None,
+        api_key: str | None = None,
+    ):
         if prompt_style not in REPLY_FORMATS:
             raise ValueError(f"prompt_style must be one of {list(REPLY_FORMATS)}")
-        self.client = Client(timeout=120)
+
+        self.provider = (provider or os.getenv("WS_MODEL_PROVIDER", "ollama")).lower()
+        if self.provider not in {"ollama", "openai", "vllm"}:
+            raise ValueError("provider must be one of: ollama, openai, vllm")
+
+        self.api_base = api_base or os.getenv("WS_OPENAI_BASE_URL") or os.getenv("OPENAI_BASE_URL")
+        self.api_key = api_key or os.getenv("WS_API_KEY") or os.getenv("OPENAI_API_KEY") or ("EMPTY" if self.provider in {"openai", "vllm"} else None)
+        self.client = Client(timeout=120) if self.provider == "ollama" else None
         self.model = model
         self.prompt_style = prompt_style
         self.env = env
@@ -143,6 +159,47 @@ class WebshopAgent:
         print(f"  done={done} reward={reward}")
         return record
 
+    def _generate_with_ollama(self, prompt: str) -> str:
+        response = self.client.generate(
+            model=self.model,
+            prompt=prompt,
+            options={"temperature": 0, "num_ctx": 8192},
+            think=False,
+        )
+        reply = response["response"]
+        if response.get("thinking"):
+            reply = f"<think>\n{response['thinking']}\n</think>\n{reply}"
+        return reply
+
+    def _generate_with_openai_compatible(self, prompt: str) -> str:
+        if not self.api_base:
+            raise RuntimeError("WS_OPENAI_BASE_URL or OPENAI_BASE_URL must be set for openai/vllm providers")
+
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0,
+            "max_tokens": 512,
+        }
+
+        endpoint = self.api_base.rstrip("/")
+        if not endpoint.endswith("/v1") and self.provider == "vllm":
+            endpoint = f"{endpoint}/v1"
+        if not endpoint.endswith("/chat/completions"):
+            endpoint = f"{endpoint}/chat/completions"
+
+        response = httpx.post(endpoint, headers=headers, json=payload, timeout=120)
+        response.raise_for_status()
+        data = response.json()
+        content = data["choices"][0]["message"]["content"]
+        if not isinstance(content, str):
+            return str(content)
+        return content
+
     def act(
         self,
         user_request,
@@ -166,28 +223,23 @@ class WebshopAgent:
             clickables=clickables,
             reply_format=REPLY_FORMATS[self.prompt_style],
         )
-        
+
         for attempt in range(1, MAX_RETRIES + 1):
             try:
-                response = self.client.generate(
-                    model=self.model,
-                    prompt=prompt,
-                    options={"temperature": 0, "num_ctx": 8192},
-                    # turn model default thinking off (too slow)
-                    # use cot prompt instead
-                    think=False,  
-                )
-                
+                if self.provider == "ollama":
+                    reply = self._generate_with_ollama(prompt)
+                else:
+                    reply = self._generate_with_openai_compatible(prompt)
             except httpx.TimeoutException:
                 print(f"  agent timed out (attempt {attempt}/{MAX_RETRIES})")
                 continue
+            except httpx.HTTPError as exc:
+                print(f"  endpoint error for {self.provider} ({attempt}/{MAX_RETRIES}): {exc}")
+                continue
 
-            reply = response["response"]
-            if response.get("thinking"):  # keep it in the log if a model thinks anyway
-                reply = f"<think>\n{response['thinking']}\n</think>\n{reply}"
             if reply.strip():
                 break
-            
+
             print(f"  empty reply from {self.model} (attempt {attempt}/{MAX_RETRIES})")
         else:
             raise RuntimeError(f"no reply from {self.model} after {MAX_RETRIES} attempts")

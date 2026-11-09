@@ -14,7 +14,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", default="test", choices=["train", "dev", "test"], help="which split to evaluate on")
     parser.add_argument("--n", type=int, default=None, help="number of goals to run (default: all)")
-    parser.add_argument("--model", default="llama3:8b", help="ollama model name")
+    parser.add_argument("--model", default="llama3:8b", help="model name or deployment name")
+    parser.add_argument("--provider", default=None, choices=["ollama", "openai", "vllm"], help="model provider: ollama or a custom OpenAI-compatible endpoint")
+    parser.add_argument("--api-base", default=None, help="base URL for OpenAI-compatible endpoint (e.g. http://localhost:8000/v1)")
+    parser.add_argument("--api-key", default=None, help="API key for OpenAI-compatible endpoints")
     parser.add_argument("--prompt", default="direct", choices=list(REPLY_FORMATS), help="direct action or chain of thought")
     parser.add_argument("--resume", type=Path, default=None, help="episode log of an interrupted run; skips the goals it already has")
     args = parser.parse_args()
@@ -23,7 +26,14 @@ if __name__ == "__main__":
         init_splits()
     rows = load_splits(split=args.split)[:args.n]
     env = build_env(data_dir=DATA_DIR, seed=SEED)
-    agent = WebshopAgent(env=env, model=args.model, prompt_style=args.prompt)
+    agent = WebshopAgent(
+        env=env,
+        model=args.model,
+        prompt_style=args.prompt,
+        provider=args.provider,
+        api_base=args.api_base,
+        api_key=args.api_key,
+    )
 
     timestamp = datetime.now()
     run_name = f"{args.split}_{args.model.replace(':', '-').replace('/', '-')}_{args.prompt}_{timestamp:%Y%m%d_%H%M%S}"
