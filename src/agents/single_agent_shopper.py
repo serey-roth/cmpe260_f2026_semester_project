@@ -7,6 +7,7 @@ load_dotenv()
 
 from pydantic_ai import Agent as PydanticAgent, ModelSettings, NativeOutput, RunContext
 from pydantic_ai.models.ollama import OllamaModel
+from pydantic_ai.profiles import ModelProfile
 
 from src.agents.agent_shopper_protocol import MAX_REPLY_TOKENS, MAX_RETRIES, MAX_STEPS, TIMEOUT_SECONDS, AgentShopperAction, AgentShopperProtocol, run_with_fallback
 from src.agents.prompts import SINGLE_AGENT_COT_PROMPT
@@ -32,21 +33,21 @@ class SingleAgentShopper(AgentShopperProtocol):
             extra_body["reasoning_effort"] = "none"
         settings = ModelSettings(timeout=TIMEOUT_SECONDS, extra_body=extra_body)
 
-        self.model = OllamaModel(model_name=model, settings=settings)
+        # Inline system prompts on: otherwise pydantic-ai adds a system message explaining its <system> tags, which we never use
+        self.model = OllamaModel(model_name=model, settings=settings, profile=ModelProfile(supports_inline_system_prompts=True))
 
         self.agent = PydanticAgent(
             model=self.model,
             deps_type=ShopperState,
-            instructions=SINGLE_AGENT_COT_PROMPT,
             output_type=NativeOutput(AgentShopperAction),
             retries=MAX_RETRIES
         )
-        
-        
+
         @self.agent.instructions
-        def get_history(ctx: RunContext[ShopperState]) -> str:
+        def system_prompt(ctx: RunContext[ShopperState]) -> str:
             history = "\n".join(ctx.deps.history) or "(none)"
             return (
+                f"{SINGLE_AGENT_COT_PROMPT.strip()}\n\n"
                 f"Your actions so far:\n{history}\n"
                 f"You have {ctx.deps.remaining_steps} actions left, and the task only counts if you finish by clicking buy now."
             )

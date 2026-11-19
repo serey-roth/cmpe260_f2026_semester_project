@@ -1,7 +1,7 @@
 """Turn successful teacher episodes into SFT chat examples, one per valid step.
 
 Each step is replayed through the real shopper with a mock HTTP transport that records the request, so the
-prompt is exactly what the model sees at inference (including what Pydantic AI adds). 
+prompt is exactly what the model sees at inference (including what Pydantic AI adds).
 
 The target is the logged reply, {"reasoning": ..., "action": ...}. 
 """
@@ -62,7 +62,8 @@ if __name__ == "__main__":
     val_goals = set(all_goals[:round(len(all_goals) * VALIDATION_HOLDOUT_PCT)])
 
     shopper = SingleAgentShopper()
-    stub = OllamaModel("qwen3.5:9b", provider=OllamaProvider(base_url="http://stub/v1", http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(record_request))))
+    stub = OllamaModel("qwen3.5:9b", provider=OllamaProvider(base_url="http://stub/v1", http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(record_request))),
+                       settings=shopper.model.settings, profile=shopper.model.profile)  # same request shape as the real model
     
     SFT_DATA_DIR.mkdir(parents=True, exist_ok=True)
     
