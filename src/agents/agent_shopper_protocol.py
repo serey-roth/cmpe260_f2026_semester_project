@@ -9,6 +9,7 @@ from pydantic_ai.exceptions import ModelTimeoutError, UnexpectedModelBehavior
 MAX_STEPS = 25
 MAX_RETRIES = 5
 TIMEOUT_SECONDS = 60
+MAX_REPLY_TOKENS = 8192
 
 @dataclass
 class AgentShopperAction:

@@ -1,15 +1,14 @@
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from pydantic_ai import Agent as PydanticAgent, NativeOutput, RunContext
-from pydantic_ai.capabilities import Thinking
+from pydantic_ai import Agent as PydanticAgent, ModelSettings, NativeOutput, RunContext
 from pydantic_ai.models.ollama import OllamaModel
 
-from src.agents.agent_shopper_protocol import MAX_RETRIES, MAX_STEPS, TIMEOUT_SECONDS, AgentShopperAction, AgentShopperProtocol, run_with_fallback
+from src.agents.agent_shopper_protocol import MAX_REPLY_TOKENS, MAX_RETRIES, MAX_STEPS, TIMEOUT_SECONDS, AgentShopperAction, AgentShopperProtocol, run_with_fallback
 from src.agents.prompts import SINGLE_AGENT_COT_PROMPT
 
 @dataclass
@@ -21,19 +20,25 @@ class ShopperState:
 class SingleAgentShopper(AgentShopperProtocol):
     def __init__(
         self, 
-        model: Literal["llama3:8b", "qwen3.5:9b"] = "llama3:8b",
+        model: str = "llama3:8b",
+        thinking: bool = True,
     ):
-        self.model = OllamaModel(
-            model_name=model
-        )
-        
+        # Sent in extra_body because Ollama ignores what pydantic-ai sends for these two:
+        # - max_tokens: pydantic-ai sends max_completion_tokens. The cap includes thinking,
+        #   so a model stuck thinking fails fast instead of filling its context
+        # - reasoning_effort "none": pydantic-ai's thinking=False sends nothing, so the model keeps thinking
+        extra_body: dict[str, Any] = {"max_tokens": MAX_REPLY_TOKENS}
+        if not thinking:
+            extra_body["reasoning_effort"] = "none"
+        settings = ModelSettings(timeout=TIMEOUT_SECONDS, extra_body=extra_body)
+
+        self.model = OllamaModel(model_name=model, settings=settings)
+
         self.agent = PydanticAgent(
             model=self.model,
             deps_type=ShopperState,
             instructions=SINGLE_AGENT_COT_PROMPT,
-            capabilities=[Thinking(effort=False)],
             output_type=NativeOutput(AgentShopperAction),
-            model_settings= {"timeout": TIMEOUT_SECONDS} ,
             retries=MAX_RETRIES
         )
         
