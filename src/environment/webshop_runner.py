@@ -57,10 +57,7 @@ class WebshopRunner:
                 "done": done,
             })
             
-            history.append(
-                selection.action if is_valid_selection 
-                else f"{selection.action} (Nothing happened. Use search[<keywords>] or click[<value>] with a listed value)"
-            )
+            history.append(self.history_entry(selection.action, is_valid_selection))
             obs = next_obs
             if done:
                 break
@@ -97,6 +94,11 @@ class WebshopRunner:
             history=list(history),
         )
     
+    @staticmethod
+    def history_entry(action: str, is_valid: bool) -> str:
+        """How an action appears in the history the shopper sees. Also used to rebuild prompts for SFT."""
+        return action if is_valid else f"{action} (Nothing happened. Use search[<keywords>] or click[<value>] with a listed value)"
+
     @staticmethod
     def format_step(step, action, details) -> str:
         kind = details["type"]
