@@ -50,7 +50,8 @@ No options were selected in 336 of the 377 purchases that needed them (option sc
 | Qwen3.5-direct-v2 | off | 25 | 0.242 | 18% | 30% | 0.64 | 20.1 | 28 | 35 | 4 | n/a |
 | Qwen3.5-direct-v3 | off | 25 | 0.245 | 16% | 34% | 0.60 | 21.0 | 30 | 33 | 5 | n/a |
 | Qwen3.5-CoT-v3 | off | 25 | 0.338 | 22% | 46% | 0.58 | 16.9 | 19 | 27 | 7 | n/a |
-| Qwen3.5-CoT-v4 | on | 25 | **0.532** | **30%** | 74% | 0.48 | 11.6 | 10 | 13 | 12 | 0.16 |
+| Qwen3.5-CoT-v4 | on | 25 | 0.532 | **30%** | 74% | 0.48 | 11.6 | 10 | 13 | 12 | 0.16 |
+| Qwen3.5-CoT-v5 | off | 25 | **0.641** | 28% | 94% | 0.34 | 7.3 | 3 | 3 | 22 | 0.28 |
 | Qwen3.5-0.8B-CoT-v5 | off | 25 | 0.280 | 12% | 48% | 0.14 | 18.3 | 33 | 26 | 13 | 5.08 |
 
 **Thinking** is the model's native (hidden) thinking; see the notes in section 4. Invalid actions were logged from Qwen3.5-CoT-v4 onward. The Qwen3.5-CoT-v1 row uses the original 50-goal summary: its episode log was later appended to by a resumed run and holds goal 541 twice, so its average step count can't be recovered (computed from the log as is: reward 0.261, success 16%, purchase 39%).
@@ -65,6 +66,7 @@ Reward components are means over purchases.
 | Llama3-CoT-v1 | 0.94 | 0.81 | 0.21 | 1.00 | 1.08 | 1.16 |
 | Qwen3.5-direct-v3 | 0.89 | 0.88 | 0.60 | 1.00 | 5.18 | 1.24 |
 | Qwen3.5-CoT-v4 | 0.96 | 0.78 | 0.48 | 1.00 | 2.78 | 1.56 |
+| Qwen3.5-CoT-v5 | 0.98 | 0.76 | 0.34 | 1.00 | 1.80 | 1.24 |
 | Qwen3.5-0.8B-CoT-v5 | 0.90 | 0.67 | 0.14 | 1.00 | 6.50 | 1.62 |
 
 ### 2.4 Invalid actions
@@ -77,6 +79,8 @@ Reward components are means over purchases.
 | Malformed action | 4 | `click[>]}` instead of `click[next >]` |
 | Value not on the page | 4 | `click[> next]` (the button is `next >`) |
 | Buy now on a Description/Features page | 1 | `click[buy now]` instead of `click[< prev]` first |
+
+**Qwen3.5-CoT-v5, thinking off** (14 invalid steps over 50 episodes, none from timeouts): all are values not on the page. 12 of them are size options containing an inch mark, such as `click[52"x84]` (sometimes written `click[52\"x84]`); the other two are `click[Features]` and `click[black]`.
 
 **Qwen3.5-0.8B-CoT-v5** (254 invalid steps over 50 episodes, none from timeouts):
 
@@ -107,9 +111,10 @@ With thinking on, the steps we inspected after Qwen3.5-0.8B's first search all h
 2. **CoT helps Qwen3.5.** On the same v3 prompt and 25 steps, CoT beats direct by 0.09 reward and 6 points of success, with 19 loops instead of 30.
 3. **Full history did not reduce loops.** v3 added the full action history and the options-reset rule; loops went from 28 (direct-v2) to 30 (direct-v3), and reward stayed at 0.24.
 4. **More steps did not bring purchases.** Going from 15 to 25 steps (direct-v1 to direct-v2, with the v2 buy rule) raised purchases from 22% to 30%, but 35 of 50 episodes still ended without a purchase.
-5. **v4 with native thinking reached the best results:** 30% success and 0.532 reward, with no-buy episodes down from 27 (CoT-v3) to 13. The prompt and the thinking setting changed together, so their separate effects are not known. The option score fell from 0.58 to 0.48.
-6. **Qwen3.5-0.8B reaches 12% success with thinking off**, the same as Qwen3.5-direct-v1. Most of its losses are invalid actions (5.08 per episode, none from timeouts) rather than shopping decisions. It also loops (33 of 50 episodes) and averages 6.5 searches per episode.
-7. **Qwen3.5-0.8B cannot run with thinking on**: its thinking runs past the 8,192-token reply cap (2.4).
+5. **v4 with native thinking reached 30% success** and 0.532 reward, with no-buy episodes down from 27 (CoT-v3) to 13. The prompt and the thinking setting changed together, so their separate effects are not known. The option score fell from 0.58 to 0.48.
+6. **Without native thinking, Qwen3.5 (CoT-v5) keeps its success rate and buys more:** 28% success (30% with thinking, in CoT-v4) and the highest reward so far, 0.641. It buys in 94% of episodes, loops in 3, and takes 7.3 steps on average instead of 11.6. It skips options more often: 22 purchases had none selected (12 in CoT-v4), and the option score is 0.34. v4 and v5 also differ in the prompt (reasoning required and first, at most 3 sentences), so not every difference comes from thinking.
+7. **Qwen3.5-0.8B reaches 12% success with thinking off**, the same as Qwen3.5-direct-v1. Most of its losses are invalid actions (5.08 per episode, none from timeouts) rather than shopping decisions. It also loops (33 of 50 episodes) and averages 6.5 searches per episode.
+8. **Qwen3.5-0.8B cannot run with thinking on**: its thinking runs past the 8,192-token reply cap (2.4).
 
 ## 4. Notes
 
@@ -117,7 +122,7 @@ With thinking on, the steps we inspected after Qwen3.5-0.8B's first search all h
 - **Native thinking:** v1–v3 call Ollama with `think=False`, added before any Qwen3.5 run. From v4 (Pydantic AI) thinking was on, because Pydantic AI's `thinking=False` setting is not sent to Ollama; this was found later. Thinking is now controlled by `--no-thinking`, which sends `reasoning_effort: "none"`. Replies are capped at 8,192 tokens, thinking included.
 - **Temperature:** 0 in the v1–v3 code; not set from v4.
 - **Retries:** invalid replies are retried up to 5 times; v1–v3 also retried requests that timed out, while from v4 a timeout goes straight to the `invalid` fallback. Interrupted runs continue with `--resume <log>`.
-- **Speed:** a 50-goal dev run on the 32 GB Mac took about 25 minutes with the Qwen3.5 direct prompt and about 7 hours with Qwen3.5-CoT-v4.
+- **Speed:** a 50-goal dev run on the 32 GB Mac took about 25 minutes with the Qwen3.5 direct prompt and about 7 hours with Qwen3.5-CoT-v4. On one A100 of the SJSU HPC, Qwen3.5-CoT-v5 with thinking off took about 28 minutes (2 slices).
 - **Comparability:** the test row and the dev rows use different goals; the prompt version and the thinking setting differ between rows (see Appendix A).
 
 ## Appendix A. Prompt Versions
@@ -128,7 +133,7 @@ With thinking on, the steps we inspected after Qwen3.5-0.8B's first search all h
 | v2 | Qwen3.5-direct-v2 (dev) | Added a rule to buy once the product fits and not search again. The exact v2 wording was not saved; v3 words it as "Buy the product as soon as the product fits and the desired options are selected. DO NOT SEARCH AGAIN FOR SOMETHING BETTER." | Free text | Last 5 actions | 25 |
 | v3 | Qwen3.5-direct-v3, Qwen3.5-CoT-v3 (dev) | Added: "Options reset when you leave a product page. Only options shown as [clicked button] on the current page are selected." Full action history instead of the last 5 (B.2) | Free text | All actions | 25 |
 | v4 | Qwen3.5-CoT-v4 (dev) | Rewritten for structured output; relaxed conditions and new navigation rules (B.3) | JSON `{"action", "reasoning"}`; reasoning optional | All actions | 25 |
-| v5 | SFT data generation (train), Qwen3.5-0.8B-CoT-v5 (dev) | Reasoning required and written before the action; at most 3 sentences (B.4) | JSON `{"reasoning", "action"}` | All actions | 25 |
+| v5 | SFT data generation (train); Qwen3.5-CoT-v5, Qwen3.5-0.8B-CoT-v5 (dev) | Reasoning required and written before the action; at most 3 sentences (B.4) | JSON `{"reasoning", "action"}` | All actions | 25 |
 
 v1–v3 sent one prompt per step. From v4 onward, the agent uses Pydantic AI with structured output, and the system prompt, the action history and the current page are sent as separate messages.
 
