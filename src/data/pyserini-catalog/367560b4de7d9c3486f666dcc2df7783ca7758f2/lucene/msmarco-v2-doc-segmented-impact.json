@@ -1,0 +1,36 @@
+[
+    {
+        "name": "msmarco-v2-doc-segmented.unicoil-noexp-0shot",
+        "type": "impact",
+        "corpus": "MS MARCO V2 Segmented Doc",
+        "corpus_index": "msmarco-v2-doc-segmented",
+        "description": "Anserini Lucene impact index of the MS MARCO V2 segmented document corpus for uniCOIL (noexp) with title prepended",
+        "filename": "lucene-inverted.msmarco-v2-doc-segmented.unicoil-noexp-0shot.20220808.4d6d2a.tar.gz",
+        "readme": "https://github.com/castorini/pyserini/tree/master/pyserini/resources/index-metadata/lucene-inverted.msmarco-v2-doc-segmented.unicoil-noexp-0shot.20220808.4d6d2a.README.md",
+        "urls": [
+            "https://rgw.cs.uwaterloo.ca/pyserini/indexes/lucene/lucene-inverted.msmarco-v2-doc-segmented.unicoil-noexp-0shot.20220808.4d6d2a.tar.gz"
+        ],
+        "md5": "e3f448f4de46d86953892337fea39ed0",
+        "size": 29059154628,
+        "documents": 124131404,
+        "total_terms": 820664704261,
+        "unique_terms": 29172
+    },
+    {
+        "name": "msmarco-v2-doc-segmented.unicoil-0shot",
+        "type": "impact",
+        "corpus": "MS MARCO V2 Segmented Doc",
+        "corpus_index": "msmarco-v2-doc-segmented",
+        "description": "Anserini Lucene impact index of the MS MARCO V2 segmented document corpus for uniCOIL, with title prepended",
+        "filename": "lucene-inverted.msmarco-v2-doc-segmented.unicoil-0shot.20220808.4d6d2a.tar.gz",
+        "readme": "https://github.com/castorini/pyserini/tree/master/pyserini/resources/index-metadata/lucene-inverted.msmarco-v2-doc-segmented.unicoil-0shot.20220808.4d6d2a.README.md",
+        "urls": [
+            "https://rgw.cs.uwaterloo.ca/pyserini/indexes/lucene/lucene-inverted.msmarco-v2-doc-segmented.unicoil-0shot.20220808.4d6d2a.tar.gz"
+        ],
+        "md5": "ff12d2001f463460a11ff6f60175190e",
+        "size": 33573638017,
+        "documents": 124131414,
+        "total_terms": 1204542769110,
+        "unique_terms": 29168
+    }
+]

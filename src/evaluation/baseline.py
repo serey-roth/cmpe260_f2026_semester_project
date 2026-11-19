@@ -5,6 +5,7 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+import src.pyserini_offline  # noqa: F401  before anything imports pyserini, so it can run without internet
 from src.agents.prompts import SINGLE_AGENT_COT_PROMPT
 from src.agents.single_agent_shopper import SingleAgentShopper
 from src.data.search_index import INDEX_DIR
