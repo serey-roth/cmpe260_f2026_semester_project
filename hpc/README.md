@@ -1,6 +1,14 @@
 # Teacher data generation on the SJSU CoE HPC
 
-`generate_teacher.sbatch` runs Qwen3.5-9B in Ollama on one GPU, with several slices of train goals running against it. Everything runs in Singularity containers, because the HPC's glibc (2.17) is too old for the torch and faiss wheels.
+Two SLURM jobs share one script:
+
+| File | What it does |
+| --- | --- |
+| `run_episodes.sh` | Starts Ollama on the job's GPU and runs several slices of goals against it. Everything runs in Apptainer containers, because the HPC's glibc (2.17) is too old for the torch and faiss wheels. |
+| `generate_teacher.sbatch` | Teacher data: Qwen3.5-9B on train goals 0–599 (6 slices of 100), 7-day queue |
+| `run_baseline.sbatch` | Dev baseline of any model on the first 50 dev goals (2 slices of 25), 4-hour queue |
+
+Settings (`MODEL`, `SPLIT`, `STARTS`, `N`, `THINKING`) can be overridden when submitting, e.g. `THINKING=off MODEL=qwen3.5:9b sbatch hpc/run_baseline.sbatch`.
 
 Two machines share your home directory:
 
