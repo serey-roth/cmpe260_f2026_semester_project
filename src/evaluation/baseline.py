@@ -22,18 +22,19 @@ if __name__ == "__main__":
     parser.add_argument("--start", type=int, default=0, help="index of the first goal in the split, to run slices in parallel")
     parser.add_argument("--n", type=int, default=None, help="number of goals to run (default: all)")
     parser.add_argument("--model", default="llama3:8b", help="ollama model name")
+    parser.add_argument("--no-thinking", action="store_true", help="turn off the model's native thinking (for the ablation)")
     parser.add_argument("--resume", type=Path, default=None, help="episode log of an interrupted run; skips the goals it already has")
     args = parser.parse_args()
 
     rows = load_splits(split=args.split)[args.start:][:args.n]
     env = build_env(data_dir=DATA_DIR, seed=SEED, index_dir=INDEX_DIR / "index")
-    shopper = SingleAgentShopper(model=args.model)
+    shopper = SingleAgentShopper(model=args.model, thinking=not args.no_thinking)
     prompt = SINGLE_AGENT_COT_PROMPT
     prompt_version = hashlib.sha256(prompt.encode()).hexdigest()[:8]
     runner = WebshopRunner(env=env, shopper=shopper)
 
     timestamp = datetime.now()
-    run_name = f"{args.split}_single_{args.model.replace(':', '-').replace('/', '-')}_{prompt_version}_{timestamp:%Y%m%d_%H%M%S}_from{args.start}"  # start keeps parallel slices in separate files
+    run_name = f"{args.split}_single_{args.model.replace(':', '-').replace('/', '-')}_{prompt_version}_{"nothink" if args.no_thinking else "think"}_{timestamp:%Y%m%d_%H%M%S}_from{args.start}"  # start keeps parallel slices in separate files
 
     EPISODE_LOG_DIR.mkdir(exist_ok=True)
     log_path = EPISODE_LOG_DIR / f"{run_name}.jsonl"
@@ -69,6 +70,7 @@ if __name__ == "__main__":
         "type": "single_cot",
         "model": args.model,
         "prompt_version": prompt_version,
+        "thinking": not args.no_thinking,
         "split": args.split,
         "num_goals": n,
         "timestamp": f"{timestamp:%Y%m%d_%H%M%S}",
