@@ -7,6 +7,7 @@ Two SLURM jobs share one script:
 | `run_episodes.sh` | Starts Ollama on the job's GPU and runs several slices of goals against it. Everything runs in Apptainer containers, because the HPC's glibc (2.17) is too old for the torch and faiss wheels. |
 | `generate_teacher.sbatch` | Teacher data: Qwen3.5-9B on train goals 0–599 (6 slices of 100), 7-day queue |
 | `run_baseline.sbatch` | Dev baseline of any model on the first 50 dev goals (2 slices of 25), 4-hour queue |
+| `train_sft.sbatch` | SFT of the student on the teacher's examples (see [SFT](#sft)); doesn't use `run_episodes.sh` |
 
 Settings (`MODEL`, `SPLIT`, `STARTS`, `N`, `THINKING`) can be overridden when submitting, e.g. `THINKING=off MODEL=qwen3.5:9b sbatch hpc/run_baseline.sbatch`.
 
@@ -116,3 +117,40 @@ Copy the episodes back to the Mac:
 ```bash
 rsync -av <SJSU_ID>@coe-hpc1.sjsu.edu:~/rl-webshop/src/agents/logs/train_single_* ~/Desktop/projects/post-train/src/agents/logs/
 ```
+
+## SFT
+
+**Once, on `coe-hpc1`.** Copy the code and the SFT examples from the Mac (`data/sft` is gitignored), then update the environment (adds TRL) and download the student model into the Hugging Face cache in your home directory:
+
+```bash
+# on the Mac
+cd ~/Desktop/projects/post-train
+rsync -av --exclude '__pycache__' --exclude 'src/agents/logs' --exclude 'src/data/webshop-data' --exclude 'src/data/search-index' \
+  pyproject.toml uv.lock src hpc data <SJSU_ID>@coe-hpc1.sjsu.edu:~/rl-webshop/
+
+# on coe-hpc1
+module load apptainer/1.3.2
+export APPTAINER_CACHEDIR=~/.apptainer APPTAINER_TMPDIR=~/.apptainer/tmp UV_PYTHON_PREFERENCE=only-system
+cd ~/rl-webshop
+apptainer exec --unsquash ~/containers/python.sif uv sync
+apptainer exec --unsquash ~/containers/python.sif .venv/bin/hf download Qwen/Qwen3.5-0.8B
+```
+
+**Test on HPC3** (5 updates, to check the GPU and the setup):
+
+```bash
+ssh coe-hpc3
+cd ~/rl-webshop && mkdir -p hpc/logs
+DATA=data/sft/37b895a8 sbatch hpc/train_sft.sbatch --max-steps 5
+tail -f hpc/logs/train-sft_<JOBID>.out
+```
+
+The log should name an A100 and show the loss. Delete the test's checkpoint before the real run: `rm -rf checkpoints/`.
+
+**Run:**
+
+```bash
+DATA=data/sft/37b895a8 sbatch hpc/train_sft.sbatch
+```
+
+The student is saved to `checkpoints/qwen3.5-0.8b-sft-<prompt_version>/`.

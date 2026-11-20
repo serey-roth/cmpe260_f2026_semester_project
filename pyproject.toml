@@ -27,6 +27,7 @@ dependencies = [
     "spacy>=3.8.16",
     "thefuzz>=0.22.1",
     "torch>=2.14.1",
+    "trl>=1.18.2",
     "webshop-minimal",
 ]
 
