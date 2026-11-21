@@ -1,12 +1,11 @@
 #!/bin/bash
-# Teacher episodes for SFT: Qwen3.5-9B with thinking on, train goals 0–599 in 6 slices of 100.
-# The Ollama server and the slices are run by hpc/run_episodes.sh.
+# Generate teacher episodes for SFT (Qwen3.5-9B with thinking on) against train goals 0–599 in 6 slices of 100.
 # Submit from HPC3 (g17): sbatch hpc/generate_teacher.sbatch
 
 #SBATCH --job-name=generate-teacher-data
 #SBATCH --partition=gpuqm
-#SBATCH --gres=gpu:1
-#SBATCH --exclude=g[1,3-5,9,11-12,14-16]   # P100 nodes: too old and small for this model
+#SBATCH --gres=gpu:a100:1                    # A100 nodes cs001-cs004; the P100s are too old for CUDA 13
+#SBATCH --exclude=cs002                      # its GPUs give CUDA error 999 to new processes (Nov 2026)
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=128G                           # each slice loads the full catalog into RAM
 #SBATCH --time=7-00:00:00
