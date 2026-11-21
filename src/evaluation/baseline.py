@@ -1,7 +1,6 @@
 import argparse
 import hashlib
 import json
-from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from src.data.search_index import INDEX_DIR
 from src.data.splits import DATA_DIR, SEED, load_splits
 from src.environment.env import build_env
 from src.environment.webshop_runner import WebshopRunner
+from src.evaluation.metrics import summarize
 
 EVAL_RUN_DIR = Path(__file__).parent / "runs"
 EPISODE_LOG_DIR = Path(__file__).parents[1] / "agents" / "logs"
@@ -59,36 +59,14 @@ if __name__ == "__main__":
     EVAL_RUN_DIR.mkdir(parents=True, exist_ok=True)
     run_path = EVAL_RUN_DIR / f"{run_name}.jsonl"
 
-    def mean(values: list) -> float | None:
-        return sum(values) / len(values) if values else None
-
-    n = len(records)
-    purchases = [r for r in records if r["done"]]
-    option_scores = [r["reward_info"]["r_option"] for r in purchases if "r_option" in (r["reward_info"] or {})]
-    viewed = [Counter(s["details"]["asin"] for s in r["steps"] if s["details"]["type"] == "product") for r in records]
     run = {
         "type": "single_cot",
         "model": args.model,
         "prompt_version": prompt_version,
         "thinking": not args.no_thinking,
         "split": args.split,
-        "num_goals": n,
         "timestamp": f"{timestamp:%Y%m%d_%H%M%S}",
-        "average_reward": sum(r["reward"] for r in records) / n,
-        "average_steps": sum(r["num_steps"] for r in records) / n,
-        "success_rate": sum(r["reward"] == 1.0 for r in records) / n,  # bought exactly the right product
-        "purchase_rate": sum(bool(r["done"]) for r in records) / n,  # bought anything
-        "option_score": sum(option_scores) / len(option_scores) if option_scores else None,  # over purchases that had options to pick
-        "invalid_actions_per_episode": sum(not s.get("is_valid", True) for r in records for s in r["steps"]) / n,  # steps the env ignored
-        "loops": sum(max(v.values(), default=0) >= 3 for v in viewed),  # episodes that opened the same product 3+ times
-        "no_buy": n - len(purchases),
-        "no_option_purchases": sum("r_option" in r["reward_info"] and not r.get("purchase", {}).get("options") for r in purchases),  # needed options, selected none
-        "reward_breakdown": {  # means over purchases
-            key: mean([float(r["reward_info"][key]) for r in purchases if key in r["reward_info"]])
-            for key in ["r_type", "r_att", "r_option", "r_price"]
-        },
-        "avg_searches": sum(s["details"]["type"] == "search" for r in records for s in r["steps"]) / n,
-        "avg_products_viewed": sum(len(v) for v in viewed) / n,  # distinct products opened
+        **summarize(records),
     }
 
     with open(run_path, "w", encoding="utf-8") as run_file:
