@@ -1,17 +1,19 @@
-# Single-Agent Baseline
+# Baseline: Base, Teacher and SFT Student
 
-Results and failure analysis for the single-agent WebShop baseline, and the setup for generating SFT teacher data. Prompts and an example episode are in the appendices.
+Single-agent WebShop shopper with the chain-of-thought prompt v5 (Appendix A), for three models:
 
-Configurations are named `<Model>-<Prompt type>-<Prompt version>`; for example, Qwen3.5-CoT-v4 is Qwen3.5 with the chain-of-thought prompt, version 4. Qwen3.5 is the 9B model unless a size is given.
+- **Base:** Qwen3.5-0.8B.
+- **Teacher:** Qwen3.5-9B, which generated the SFT data.
+- **Student:** Qwen3.5-0.8B fine-tuned (SFT) on the teacher's successful episodes.
 
 ## 1. Setup
 
-- **Environment:** WebShop with the full catalog (1,181,436 products) and our own search index.
-- **Splits:** test 500 goals, dev 998, train 10,538. The test run used all 500 test goals; dev comparisons use the first 50 dev goals (goals 500–549).
-- **Models:** run locally through Ollama: llama3:8b, qwen3.5:9b and qwen3.5:0.8b (bf16).
-- **Prompt types:** **direct** asks only for the action; **CoT** asks the model to compare the request with the page first (Is this the right product? Which requested options are selected and which are missing? Is the price within the limit?) and to give its reasoning with the action.
-
-### Metrics
+- **Environment:** WebShop with the full catalog (1,181,436 products) and our own search index; at most 25 actions per episode.
+- **Goals:** dev results use the first 50 dev goals (goals 500–549); the teacher data uses train goals 0–599.
+- **Serving:** Ollama on one A100 of the SJSU HPC, with each model's sampling settings from Ollama. Our imported models copy those of Ollama's `qwen3.5:0.8b-bf16`: temperature 1, top_k 20, top_p 0.95, presence penalty 1.5.
+- **Reply:** JSON `{"reasoning", "action"}`, with `reasoning` required and first (structured output).
+- **Thinking:** the model's native (hidden) thinking, set per run. Off sends `reasoning_effort: "none"`. Replies are capped at 8,192 tokens, thinking included.
+- **Message layout:** the prompt and the action history are one system message; the current page is the user message. The teacher data was generated with an earlier layout (section 2.4).
 
 | Metric | Definition |
 | :---- | :---- |
@@ -22,67 +24,63 @@ Configurations are named `<Model>-<Prompt type>-<Prompt version>`; for example, 
 | Loops | Episodes that opened the same product 3 or more times |
 | No buy | Episodes with no purchase |
 | No opt | Purchases that needed options but had none selected |
-| Invalid / ep | Mean number of actions per episode that the environment ignored |
+| Invalid / ep | Mean number of actions per episode that the environment ignored: anything other than `search[<keywords>]` or `click[<value>]` with a value from the current page |
 
-An action is **invalid** when the environment ignores it: anything other than `search[<keywords>]` or `click[<value>]` with a value from the current page. Steps where the model gave no usable reply (a timeout, or invalid output after the retries) are recorded as the action `invalid`.
+## 2. Results (dev, 50 goals)
 
-## 2. Results
+### 2.1 Base, teacher and student
 
-### 2.1 Test split: Llama3-direct-v1 (500 goals, 15 max steps)
-
-| Reward | Success | Purchase | Avg steps |
-| :---- | :---- | :---- | :---- |
-| 0.545 | 14.8% | 96.6% | 3.6 |
-
-| Reward (rounded to 0.1) | 0 | 0.1 | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 | 0.7 | 0.8 | 1.0 |
+| Model | Thinking | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| Episodes | 41 | 15 | 41 | 48 | 16 | 85 | 19 | 124 | 37 | 74 |
+| Teacher (Qwen3.5-9B) | on | 0.554 | 32% | 78% | 0.44 | 9.8 | 8 | 11 | 15 | 0.10 |
+| Qwen3.5-9B | off | 0.595 | 24% | 86% | 0.26 | 7.8 | 5 | 7 | 22 | 0.32 |
+| Base (Qwen3.5-0.8B, Ollama's build) | off | 0.371 | 14% | 60% | 0.15 | 15.7 | 26 | 20 | 18 | 3.80 |
+| Base (Qwen3.5-0.8B, our GGUF) | off | 0.277 | 10% | 50% | 0.25 | 17.3 | 31 | 25 | 11 | 3.92 |
+| **Student (SFT, epoch 2)** | off | **0.710** | **40%** | **94%** | **0.51** | 8.3 | **2** | **3** | 13 | 0.36 |
 
-No options were selected in 336 of the 377 purchases that needed them (option score 0.07); 329 of those 336 episodes were search, open one product, buy. The goal's target product was bought in 114 of 483 purchases.
+"Our GGUF" is the base model exported to Ollama the same way as the student (section 3), so it is the base the student is compared with.
 
-### 2.2 Dev split: all configurations (first 50 dev goals)
-
-| Configuration | Thinking | Max steps | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
-| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| Llama3-CoT-v1 | – | 15 | 0.483 | 16% | 76% | 0.21 | 7.3 | 5 | 12 | 23 | n/a |
-| Qwen3.5-direct-v1 | off | 15 | 0.179 | 12% | 22% | 0.74 | 13.9 | 26 | 39 | 2 | n/a |
-| Qwen3.5-CoT-v1 | off | 15 | 0.266 | 16% | 40% | 0.59 | – | 10 | 31 | 5 | n/a |
-| Qwen3.5-direct-v2 | off | 25 | 0.242 | 18% | 30% | 0.64 | 20.1 | 28 | 35 | 4 | n/a |
-| Qwen3.5-direct-v3 | off | 25 | 0.245 | 16% | 34% | 0.60 | 21.0 | 30 | 33 | 5 | n/a |
-| Qwen3.5-CoT-v3 | off | 25 | 0.338 | 22% | 46% | 0.58 | 16.9 | 19 | 27 | 7 | n/a |
-| Qwen3.5-CoT-v4 | on | 25 | 0.532 | **30%** | 74% | 0.48 | 11.6 | 10 | 13 | 12 | 0.16 |
-| Qwen3.5-CoT-v5 | off | 25 | **0.641** | 28% | 94% | 0.34 | 7.3 | 3 | 3 | 22 | 0.28 |
-| Qwen3.5-0.8B-CoT-v5 | off | 25 | 0.280 | 12% | 48% | 0.14 | 18.3 | 33 | 26 | 13 | 5.08 |
-
-**Thinking** is the model's native (hidden) thinking; see the notes in section 4. Invalid actions were logged from Qwen3.5-CoT-v4 onward. The Qwen3.5-CoT-v1 row uses the original 50-goal summary: its episode log was later appended to by a resumed run and holds goal 541 twice, so its average step count can't be recovered (computed from the log as is: reward 0.261, success 16%, purchase 39%).
-
-### 2.3 Reward breakdown and exploration
+| Model | Type | Attributes | Options | Price | Searches / ep | Products viewed / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| Teacher (thinking on) | 0.96 | 0.78 | 0.44 | 1.00 | 2.38 | 1.30 |
+| Qwen3.5-9B (thinking off) | 0.98 | 0.83 | 0.26 | 1.00 | 1.92 | 1.10 |
+| Base (Ollama's build) | 0.95 | 0.80 | 0.15 | 1.00 | 5.80 | 1.38 |
+| Base (our GGUF) | 0.84 | 0.61 | 0.25 | 1.00 | 7.22 | 1.46 |
+| Student | 0.98 | 0.84 | 0.51 | 0.98 | 1.70 | 1.34 |
 
 Reward components are means over purchases.
 
-| Configuration | Type | Attributes | Options | Price | Searches / ep | Products viewed / ep |
-| :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| Llama3-direct-v1 (test) | 0.92 | 0.70 | 0.07 | 0.99 | 1.06 | 1.02 |
-| Llama3-CoT-v1 | 0.94 | 0.81 | 0.21 | 1.00 | 1.08 | 1.16 |
-| Qwen3.5-direct-v3 | 0.89 | 0.88 | 0.60 | 1.00 | 5.18 | 1.24 |
-| Qwen3.5-CoT-v4 | 0.96 | 0.78 | 0.48 | 1.00 | 2.78 | 1.56 |
-| Qwen3.5-CoT-v5 | 0.98 | 0.76 | 0.34 | 1.00 | 1.80 | 1.24 |
-| Qwen3.5-0.8B-CoT-v5 | 0.90 | 0.67 | 0.14 | 1.00 | 6.50 | 1.62 |
+### 2.2 Student epochs
 
-### 2.4 Invalid actions
+| Epoch | Validation loss | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| 1 | 0.770 | 0.700 | 32% | 98% | 0.52 | 5.8 | 0 | 1 | 11 | 0.28 |
+| **2** | **0.754** | **0.710** | **40%** | 94% | 0.51 | 8.3 | 2 | 3 | 13 | 0.36 |
+| 3 | 0.860 | 0.645 | 40% | 84% | 0.55 | 9.6 | 2 | 8 | 10 | 0.80 |
 
-**Qwen3.5, dev runs from Nov 6–8** (20 invalid steps across the four dev runs that logged them):
+### 2.3 Importing models into Ollama
 
-| Type | Count | Example |
-| :---- | :---- | :---- |
-| No valid reply (timeout, or invalid output after retries) | 11 | `invalid` |
-| Malformed action | 4 | `click[>]}` instead of `click[next >]` |
-| Value not on the page | 4 | `click[> next]` (the button is `next >`) |
-| Buy now on a Description/Features page | 1 | `click[buy now]` instead of `click[< prev]` first |
+| Model | Import | Reward | Success | Purchase | Avg steps | No buy | Invalid / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| Base | GGUF chat template (JSON schema dropped) | 0.060 | 6% | 6% | 24.0 | 47 | 4.66 |
+| Base | Ollama's Qwen3.5 renderer and parser | 0.277 | 10% | 50% | 17.3 | 25 | 3.92 |
+| Student | GGUF chat template (JSON schema dropped) | 0.602 | 34% | 78% | 9.7 | 11 | 1.54 |
+| Student | Ollama's Qwen3.5 renderer and parser | 0.710 | 40% | 94% | 8.3 | 3 | 0.36 |
 
-**Qwen3.5-CoT-v5, thinking off** (14 invalid steps over 50 episodes, none from timeouts): all are values not on the page. 12 of them are size options containing an inch mark, such as `click[52"x84]` (sometimes written `click[52\"x84]`); the other two are `click[Features]` and `click[black]`.
+### 2.4 Message layout
 
-**Qwen3.5-0.8B-CoT-v5** (254 invalid steps over 50 episodes, none from timeouts):
+The first layout sent the prompt and the history as separate system messages, after an extra system message from Pydantic AI about `<system>` tags. Qwen3.5's chat template accepts only one system message, so the current layout merges them and turns Pydantic AI's message off. The prompt text is the same.
+
+| Model | Layout | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | Invalid / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| Qwen3.5-9B, thinking off | first | 0.641 | 28% | 94% | 0.34 | 7.3 | 3 | 3 | 0.28 |
+| Qwen3.5-9B, thinking off | current | 0.595 | 24% | 86% | 0.26 | 7.8 | 5 | 7 | 0.32 |
+| Base (Ollama's build) | first | 0.280 | 12% | 48% | 0.14 | 18.3 | 33 | 26 | 5.08 |
+| Base (Ollama's build) | current | 0.371 | 14% | 60% | 0.15 | 15.7 | 26 | 20 | 3.80 |
+
+### 2.5 Base model failures
+
+Invalid actions of the base (Ollama's build, first layout; 254 over 50 episodes, none from timeouts):
 
 | Type | Share | Example |
 | :---- | :---- | :---- |
@@ -92,134 +90,32 @@ Reward components are means over purchases.
 | `click[search]` (not allowed) | 2% | `click[search]` |
 | Buy now on a page without the button | 0.4% | `click[buy now]` |
 
-With thinking on, the steps we inspected after Qwen3.5-0.8B's first search all hit the 8,192-token reply cap, and no episode finished before the run was cancelled.
+With thinking on, the base's thinking ran past the 8,192-token reply cap on every step we inspected after its first search, and no episode finished.
 
-### 2.5 Teacher data generation (SJSU HPC)
+## 3. Teacher Data and SFT
 
 | | |
 | :---- | :---- |
-| Teacher | Qwen3.5-9B, CoT v5, thinking on |
-| Goals | train goals 0–599, 6 parallel slices of 100 |
-| Hardware | 1 × NVIDIA A100 40 GB, Ollama in an Apptainer container |
-| Throughput | about 136 episodes per hour, estimated from the first 15 minutes (35 episodes); about 11× the 32 GB Mac |
-| Request speed | about 2.75 s per request with one slice running: about 107 tokens/s generation, 2,600 tokens/s prompt processing |
-| Memory | 13.9 GB peak (`sacct` MaxRSS) for the 2-goal test with one slice |
+| Teacher run | Qwen3.5-9B, thinking on, first layout; train goals 0–599 in 6 parallel slices on one A100 |
+| Teacher result | 602 episodes (train goals 0–599, and 2 from the setup test): 239 successful (40%), reward 0.628, 515 purchases |
+| SFT data | The 239 successful episodes, one example per valid step: 1,171 train and 210 validation examples (215 and 24 goals) |
+| Prompts | Rebuilt by replaying each episode through the current agent code, so every prompt is what the agent sends at inference (current layout). The target is the teacher's logged reply, `{"reasoning", "action"}`; its native thinking was not logged |
+| Training | `Qwen/Qwen3.5-0.8B`, text-only, full fine-tune with TRL `SFTTrainer`, loss on the reply only; 3 epochs (1,758 updates, batch 2, learning rate 2e-5), 1,905 s on one A100 |
+| Serving | Converted to GGUF with the llama.cpp release Ollama bundles, and imported into Ollama with Ollama's Qwen3.5 renderer and parser |
 
-## 3. Findings
+## 4. Findings
 
-1. **The models fail in opposite ways.** Llama3 buys early and skips options (option score 0.07 on test, 0.21 on dev). Qwen3.5 picks options well (0.58–0.74 through v3) but often never buys (27–39 of 50 episodes with no purchase).
-2. **CoT helps Qwen3.5.** On the same v3 prompt and 25 steps, CoT beats direct by 0.09 reward and 6 points of success, with 19 loops instead of 30.
-3. **Full history did not reduce loops.** v3 added the full action history and the options-reset rule; loops went from 28 (direct-v2) to 30 (direct-v3), and reward stayed at 0.24.
-4. **More steps did not bring purchases.** Going from 15 to 25 steps (direct-v1 to direct-v2, with the v2 buy rule) raised purchases from 22% to 30%, but 35 of 50 episodes still ended without a purchase.
-5. **v4 with native thinking reached 30% success** and 0.532 reward, with no-buy episodes down from 27 (CoT-v3) to 13. The prompt and the thinking setting changed together, so their separate effects are not known. The option score fell from 0.58 to 0.48.
-6. **Without native thinking, Qwen3.5 (CoT-v5) keeps its success rate and buys more:** 28% success (30% with thinking, in CoT-v4) and the highest reward so far, 0.641. It buys in 94% of episodes, loops in 3, and takes 7.3 steps on average instead of 11.6. It skips options more often: 22 purchases had none selected (12 in CoT-v4), and the option score is 0.34. v4 and v5 also differ in the prompt (reasoning required and first, at most 3 sentences), so not every difference comes from thinking.
-7. **Qwen3.5-0.8B reaches 12% success with thinking off**, the same as Qwen3.5-direct-v1. Most of its losses are invalid actions (5.08 per episode, none from timeouts) rather than shopping decisions. It also loops (33 of 50 episodes) and averages 6.5 searches per episode.
-8. **Qwen3.5-0.8B cannot run with thinking on**: its thinking runs past the 8,192-token reply cap (2.4).
+1. **SFT lifts Qwen3.5-0.8B from 10% to 40% success** (0.277 to 0.710 reward). The student buys in 94% of episodes instead of 50%, loops in 2 instead of 31, makes 0.36 invalid actions per episode instead of 3.92, and searches 1.70 times per episode instead of 7.22.
+2. **The student scores above its teacher.** Against the teacher as it generated the data (thinking on): 0.710 against 0.554 reward, 40% against 32% success, 94% against 78% purchases, 0.51 against 0.44 option score. The student learned only from the teacher's successful episodes, and without its native thinking.
+3. **Native thinking gives the teacher more successes and better options, but lower reward.** With thinking on, the 9B has 32% success against 24% and an option score of 0.44 against 0.26, but 0.554 reward against 0.595: it buys less often (78% against 86%) and loops more (8 against 5).
+4. **Epoch 2 is the best student**, by validation loss and by dev reward (0.710). With more epochs, episodes get longer (5.8, 8.3, 9.6 steps) and purchases fewer (98%, 94%, 84%); invalid actions per episode go from 0.36 (epoch 2) to 0.80 (epoch 3).
+5. **An imported model needs Ollama's Qwen3.5 renderer and parser.** Without them, Ollama renders the prompt with the GGUF's chat template: the same prompt text, but the JSON schema is silently dropped, so replies can put the action before the reasoning. That cut the base to 6% success (3 purchases) and the student to 34%. With them, our GGUF gives the same replies as Ollama's build of the same weights (checked at temperature 0).
+6. **The message layout changes little.** Going to one system message: the 9B (thinking off) from 28% to 24% success, the base from 12% to 14%.
+7. **The base fails mostly on actions, not choices.** It makes 3.80 (current layout) and 5.08 (first layout) invalid actions per episode, 60% of them values not on the page, loops in 26 and 33 of 50 episodes, and cannot run with thinking on (2.5).
 
-## 4. Notes
+## Appendix A. Prompt (v5)
 
-- **Reasoning tags (v1–v3):** Llama3-CoT-v1 reasons inside `<think>` tags; the Qwen3.5 CoT runs use `<reasoning>` tags, because Ollama strips `<think>` from Qwen replies.
-- **Native thinking:** v1–v3 call Ollama with `think=False`, added before any Qwen3.5 run. From v4 (Pydantic AI) thinking was on, because Pydantic AI's `thinking=False` setting is not sent to Ollama; this was found later. Thinking is now controlled by `--no-thinking`, which sends `reasoning_effort: "none"`. Replies are capped at 8,192 tokens, thinking included.
-- **Temperature:** 0 in the v1–v3 code; not set from v4.
-- **Retries:** invalid replies are retried up to 5 times; v1–v3 also retried requests that timed out, while from v4 a timeout goes straight to the `invalid` fallback. Interrupted runs continue with `--resume <log>`.
-- **Speed:** a 50-goal dev run on the 32 GB Mac took about 25 minutes with the Qwen3.5 direct prompt and about 7 hours with Qwen3.5-CoT-v4. On one A100 of the SJSU HPC, Qwen3.5-CoT-v5 with thinking off took about 28 minutes (2 slices).
-- **Comparability:** the test row and the dev rows use different goals; the prompt version and the thinking setting differ between rows (see Appendix A).
-
-## Appendix A. Prompt Versions
-
-| Version | Runs | Change from the previous version | Reply format | History shown | Max steps |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| v1 | Llama3-direct-v1 (test); Llama3-CoT-v1, Qwen3.5-direct-v1, Qwen3.5-CoT-v1 (dev) | Original prompt (B.1) | Free text; action extracted with a regular expression | Last 5 actions | 15 |
-| v2 | Qwen3.5-direct-v2 (dev) | Added a rule to buy once the product fits and not search again. The exact v2 wording was not saved; v3 words it as "Buy the product as soon as the product fits and the desired options are selected. DO NOT SEARCH AGAIN FOR SOMETHING BETTER." | Free text | Last 5 actions | 25 |
-| v3 | Qwen3.5-direct-v3, Qwen3.5-CoT-v3 (dev) | Added: "Options reset when you leave a product page. Only options shown as [clicked button] on the current page are selected." Full action history instead of the last 5 (B.2) | Free text | All actions | 25 |
-| v4 | Qwen3.5-CoT-v4 (dev) | Rewritten for structured output; relaxed conditions and new navigation rules (B.3) | JSON `{"action", "reasoning"}`; reasoning optional | All actions | 25 |
-| v5 | SFT data generation (train); Qwen3.5-CoT-v5, Qwen3.5-0.8B-CoT-v5 (dev) | Reasoning required and written before the action; at most 3 sentences (B.4) | JSON `{"reasoning", "action"}` | All actions | 25 |
-
-v1–v3 sent one prompt per step. From v4 onward, the agent uses Pydantic AI with structured output, and the system prompt, the action history and the current page are sent as separate messages.
-
-## Appendix B. Prompts
-
-### B.1 v1
-
-The full prompt sent at every step. `{...}` fields are filled in per step.
-
-```text
-You are a personal shopper browsing an ecommerce website. Find and buy the product that best matches the user's request.
-
-The best match MUST satisfy the following conditions:
-1. It matches what the user asked for.
-2. It has every feature the user asked for (check the title, and open Description or Features if the title does not confirm it).
-3. Every option the user asked for (such as color or size) is selected on the product page.
-4. Its price is within any price limit in the request.
-
-How to proceed:
-- On a search results page, compare titles and prices, then click the ASIN of the best match. Use next > only if nothing fits.
-- On a product page, select the requested options. Once the product fits the request and its options are selected, click[buy now].
-- "< prev" and "back to search" leave the current page. Only use them if this product does not fit the request.
-- Do not reopen a product you already looked at unless you are choosing between products.
-
-User request:
-{user_request}
-
-Current page:
-{observations}
-
-Valid actions on this page:
-- {search_hint}
-- click[<value>] where <value> is exactly one of: {clickables}
-
-Your recent actions:
-{recent_history}
-You have {remaining_steps} actions left, and the task only counts if you finish by clicking buy now.
-
-Reply with exactly one action and nothing else, and ALWAYS include the square brackets.
-Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]
-```
-
-### B.2 v3
-
-v1 with two added rules, the full action history ("Your actions so far"), and a reply format that depends on the prompt type. Only the changed "How to proceed" section is shown. v2 was not saved; it added the buy rule and kept the last 5 actions as history.
-
-```text
-How to proceed:
-- On a search results page, compare titles and prices, then click the ASIN of the best match. Use next > only if nothing fits.
-- On a product page, select the requested options. Once the product fits the request and its options are selected, click[buy now].
-- Options reset when you leave a product page. Only options shown as [clicked button] on the current page are selected.
-- "< prev" and "back to search" leave the current page. Only use them if this product does not fit the request.
-- Do not reopen a product you already looked at UNLESS you are choosing between products.
-- Buy the product as soon as the product fits and the desired options are selected. DO NOT SEARCH AGAIN FOR SOMETHING BETTER.
-```
-
-**Direct reply format**:
-
-```text
-Reply with exactly one action and nothing else, and ALWAYS include the square brackets.
-Examples: search[blue wireless headphones], click[b09q55jlcs], or click[buy now]
-```
-
-**CoT reply format**:
-
-```text
-First reason briefly inside <reasoning></reasoning> tags, then write exactly one action on the line after </reasoning>.
-In your reasoning, compare the user request with the current page: Is this the right product? Which requested options are already selected and which are still missing? Is the price within the limit?
-The action must be written as: search[<keywords>] or click[<value>].
-
-Example reply on a product page:
-<reasoning>
-This is a black relaxed-fit sweatpant under $40, which matches. The request asks for black and xx-large. Neither is selected yet, so I select black first.
-</reasoning>
-click[black]
-
-Example reply on the search page:
-<reasoning>
-I have not searched yet, so I search for the key words of the request.
-</reasoning>
-search[xx-large black relaxed fit workout sweatpants]
-```
-
-### B.3 v4
-
-**System prompt**:
+**System message**, rebuilt each step:
 
 ```text
 You are a personal shopper browsing an ecommerce website. Find and buy the product that best matches the user's request.
@@ -240,30 +136,23 @@ Rules:
 - Do not reopen a product you already looked at UNLESS you are choosing between products.
 - Buy the product as soon as you find the first one that fits the user request with the desired options are selected. DO NOT SEARCH AGAIN FOR SOMETHING BETTER.
 - If no product matches exactly after you have looked at the results, open the closest one, select the closest options, and click[buy now]. Buying a close match is better than buying nothing.
-```
 
-**Action history** (a second system message, rebuilt each step)
-
-```text
-Your actions so far:
-{history}
-You have {remaining_steps} actions left, and the task only counts if you finish by clicking buy now.
-```
-
-**CoT reply format** (a third system message)
-
-```text
 Before you select an action, compare the user request with the current page: Is this the right product? Which requested options are already selected and which are still missing? Is the price within the limit?
 After you analyze the request, reply with EXACTLY one action, either 'search[<keywords>]' or 'click[<value>]' and your reasoning.
+Keep the reasoning concise: at most 3 short sentences.
 
 Example on a product page:
 {"reasoning": "This is a black relaxed-fit sweatpant under $40, which matches. The request asks for black and xx-large. Neither is selected yet, so I select black first.", "action": "click[black]"}
 
 Example on the search page:
 {"reasoning": "I have not searched yet, so I search for the key words of the request.", "action": "search[xx-large black relaxed fit workout sweatpants]"}
+
+Your actions so far:
+{history}
+You have {remaining_steps} actions left, and the task only counts if you finish by clicking buy now.
 ```
 
-**User message** (each step)
+**User message**, each step:
 
 ```text
 User request: {user_request}
@@ -271,65 +160,13 @@ Current page text: {observation}
 Click values: {clickables}. {search_hint}
 ```
 
-### B.4 v5
+## Appendix B. Example Episode (Student, goal 500, reward 1.0)
 
-Same text as v4, with three changes:
-
-1. The CoT reply format is merged into the system prompt, so the action history comes last.
-2. The reply format adds: "Keep the reasoning concise: at most 3 short sentences."
-3. The output schema requires `reasoning` and places it before `action`, so the model reasons before it picks the action. In v4, `reasoning` was optional and came after the action, and the model sometimes skipped it (steps 1 and 3 in Appendix C).
-
-## Appendix C. Example Episode (Qwen3.5-CoT-v4, reward 1.0)
-
-**Request:** i need a heavy duty dust proof tempered glass for iphone 13 pro max 6.7 inch and its size is case+4 protectors with redblack color, and price lower than 50.00 dollars
+**Request:** i need to find a small end table that is easy to assemble; pick a blue-coated steel frame that won't rust, and price lower than 80.00 dollars
 
 | Step | Action | Reasoning |
 | :---- | :---- | :---- |
-| 1 | `search[heavy duty dust proof tempered glass iphone 13 pro max red black]` | (none) |
-| 2 | `click[b09p572dp9]` | The product matches the user request: iPhone 13 Pro Max 6.7 inch case + 4 protectors (2 screen + 2 camera), heavy duty/wine red color at $18.99 which is under $50. |
-| 3 | `click[redblack]` | (none) |
-| 4 | `click[case+4 protectors]` | The product matches the user request (iPhone 13 Pro Max case under $50 at $18.99, and redblack color is already selected). The only missing requirement is the 'case+4 protectors' option which needs to be selected before clicking buy now. |
-| 5 | `click[buy now]` | This product matches the user request: it's a heavy duty case with tempered glass (screen/camera protectors) for iPhone 13 Pro Max 6.7 inch. The color 'redblack' is selected as requested, and 'case+4 protectors' is selected (2 screen + 2 camera protector = 4). Price $18.99 is under $50 limit. All requested options are selected, so I should buy now. |
-
-**What the model receives at step 4** (system prompt from B.3 omitted; `...` marks lines cut here)
-
-```text
-[system] Your actions so far:
-search[heavy duty dust proof tempered glass iphone 13 pro max red black]
-click[b09p572dp9]
-click[redblack]
-You have 22 actions left, and the task only counts if you finish by clicking buy now.
-
-[user] User request: i need a heavy duty dust proof tempered glass for iphone 13 pro max 6.7 inch and its size is case+4 protectors with redblack color, and price lower than 50.00 dollars
-Current page text: You have clicked redblack.
-Instruction:
-i need a heavy duty dust proof tempered glass for iphone 13 pro max 6.7 inch and its size is case+4 protectors with redblack color, and price lower than 50.00 dollars
-[button] Back to Search [button_]
-[button] < Prev [button_]
-color
-  [button] black [button_]
-  [button] pinkblue [button_]
-  [button] purpleblue [button_]
-  [clicked button] redblack [clicked button_]
-  ...
-size
-  [button] case+2 protectors [button_]
-  [button] case+2 protectors+clip [button_]
-  [button] case+4 protectors [button_]
-GREWORD for iPhone 13 Pro Max Case with 2 Screen Protector 2 Camera Protector Heavy Duty Shockproof Drop Protective Cover for iPhone 13 Pro Max 6.7 Inch (WineRed+Lens)
-Price: $18.99
-Rating: N.A.
-[button] Description [button_]
-[button] Features [button_]
-[button] Reviews [button_]
-[button] Buy Now [button_]
-Click values: ... search is not allowed on this page.
-```
-
-The page is as logged. The list of click values was not logged in this run, so it is not shown.
-
-**Reply** (the logged action and reasoning)
-
-```json
-{"action": "click[case+4 protectors]", "reasoning": "The product matches the user request (iPhone 13 Pro Max case under $50 at $18.99, and redblack color is already selected). The only missing requirement is the 'case+4 protectors' option which needs to be selected before clicking buy now."}
-```
+| 1 | `search[small blue coated steel frame end table]` | I'm on the homepage with no products shown yet. I need to search for a small end table that matches the user's criteria: blue-coated steel frame, easy to assemble, under $80. |
+| 2 | `click[b07yz35f4h]` | None of the visible products on this search results page mention 'blue' color or steel frame in a specific way. I need to check product details further by clicking ASINs that might match better criteria. The first ASIN B07YZ35F4H has Anti-Rust Coating and matches the easy assembly requirement. |
+| 3 | `click[blue]` | This product matches: small end table with anti-rust coating at $53.99 (under $80). However, it's currently marked as Gold and I need Blue. I should select the blue color option first. |
+| 4 | `click[Buy Now]` | The product matches all requirements: blue-coated steel frame, small end table type, and price under $80. Blue color is already selected. This is a valid match. |
