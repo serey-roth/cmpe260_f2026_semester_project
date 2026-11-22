@@ -5,12 +5,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from pydantic import BaseModel
 from pydantic_ai import Agent as PydanticAgent, ModelSettings, NativeOutput, RunContext
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.profiles import ModelProfile
 
 from src.agents.agent_shopper_protocol import MAX_REPLY_TOKENS, MAX_RETRIES, MAX_STEPS, TIMEOUT_SECONDS, AgentShopperAction, AgentShopperProtocol, run_with_fallback
 from src.agents.prompts import SINGLE_AGENT_COT_PROMPT
+
+class AgentModel(OllamaModel):
+    def __init__(
+        self,
+        model_name: str,
+        thinking: bool
+    ):
+        # Sent in extra_body because Ollama ignores what pydantic-ai sends for these two:
+        # - max_tokens: pydantic-ai sends max_completion_tokens. The cap includes thinking,
+        #   so a model stuck thinking fails fast instead of filling its context
+        # - reasoning_effort "none": pydantic-ai's thinking=False sends nothing, so the model keeps thinking
+        extra_body: dict[str, Any] = {"max_tokens": MAX_REPLY_TOKENS}
+        if not thinking:
+            extra_body["reasoning_effort"] = "none"
+        settings = ModelSettings(timeout=TIMEOUT_SECONDS, extra_body=extra_body)
+        # Inline system prompts on: otherwise pydantic-ai adds a system message explaining its <system> tags, which we never use
+        super().__init__(model_name=model_name, settings=settings, profile=ModelProfile(supports_inline_system_prompts=True))
+
 
 @dataclass
 class ShopperState:
@@ -21,20 +40,9 @@ class ShopperState:
 class SingleAgentShopper(AgentShopperProtocol):
     def __init__(
         self, 
-        model: str = "llama3:8b",
-        thinking: bool = True,
+        model: AgentModel,
     ):
-        # Sent in extra_body because Ollama ignores what pydantic-ai sends for these two:
-        # - max_tokens: pydantic-ai sends max_completion_tokens. The cap includes thinking,
-        #   so a model stuck thinking fails fast instead of filling its context
-        # - reasoning_effort "none": pydantic-ai's thinking=False sends nothing, so the model keeps thinking
-        extra_body: dict[str, Any] = {"max_tokens": MAX_REPLY_TOKENS}
-        if not thinking:
-            extra_body["reasoning_effort"] = "none"
-        settings = ModelSettings(timeout=TIMEOUT_SECONDS, extra_body=extra_body)
-
-        # Inline system prompts on: otherwise pydantic-ai adds a system message explaining its <system> tags, which we never use
-        self.model = OllamaModel(model_name=model, settings=settings, profile=ModelProfile(supports_inline_system_prompts=True))
+        self.model = model
 
         self.agent = PydanticAgent(
             model=self.model,
