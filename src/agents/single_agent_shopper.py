@@ -45,12 +45,18 @@ class SingleAgentShopper(AgentShopperProtocol):
 
         @self.agent.instructions
         def system_prompt(ctx: RunContext[ShopperState]) -> str:
-            history = "\n".join(ctx.deps.history) or "(none)"
-            return (
-                f"{SINGLE_AGENT_COT_PROMPT.strip()}\n\n"
-                f"Your actions so far:\n{history}\n"
-                f"You have {ctx.deps.remaining_steps} actions left, and the task only counts if you finish by clicking buy now."
-            )
+            return self.build_system_prompt(ctx.deps)
+
+        self.last_prompt: list[dict[str, str]] | None = None
+
+    @staticmethod
+    def build_system_prompt(state: ShopperState) -> str:
+        history = "\n".join(state.history) or "(none)"
+        return (
+            f"{SINGLE_AGENT_COT_PROMPT.strip()}\n\n"
+            f"Your actions so far:\n{history}\n"
+            f"You have {state.remaining_steps} actions left, and the task only counts if you finish by clicking buy now."
+        )
             
             
     def reset(self) -> None:
@@ -77,6 +83,12 @@ class SingleAgentShopper(AgentShopperProtocol):
         )
         
         
+        # the exact chat messages sent to the model, saved with each step to rebuild SFT examples
+        self.last_prompt = [
+            {"role": "system", "content": self.build_system_prompt(shopper_state)},
+            {"role": "user", "content": user_prompt},
+        ]
+
         return run_with_fallback(
             self.agent,
             user_prompt,

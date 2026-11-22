@@ -49,6 +49,8 @@ class WebshopRunner:
                 "step": step,
                 "observation": obs,
                 "available_actions": available_actions,  # with the observation and history, rebuilds the step's prompt for SFT
+                "history": list(history),  # actions so far, exactly as the model saw them
+                "prompt": getattr(self.shopper, "last_prompt", None),  # exact chat messages sent to the model
                 "thought": selection.reasoning,
                 "action": selection.action,
                 "is_valid": is_valid_selection,
