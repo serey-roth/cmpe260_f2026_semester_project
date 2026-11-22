@@ -8,6 +8,7 @@
 #   STARTS    first goal index of each slice, e.g. "0 100 200"
 #   N         goals per slice
 #   THINKING  on (default) or off (passes --no-thinking)
+#   TOOLS     on (default, passes --tools) or off (JSON replies)
 
 set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
@@ -18,13 +19,14 @@ export OLLAMA_BASE_URL=http://127.0.0.1:$PORT/v1   # where the shopper sends req
 export JAVA_HOME=$HOME/jdk                         # pyserini's search engine
 export PYTHONUNBUFFERED=1
 
-echo "model=$MODEL split=$SPLIT starts=($STARTS) n=$N thinking=${THINKING:-on}"
+echo "model=$MODEL split=$SPLIT starts=($STARTS) n=$N thinking=${THINKING:-on} tools=${TOOLS:-on}"
 nvidia-smi --query-gpu=name,memory.total --format=csv
 
 LOG=hpc/logs/ollama_$SLURM_JOB_ID.log
-# --env, because the Ollama image sets its own OLLAMA_HOST. One request slot per slice; keep the model loaded
+# --env, because the Ollama image sets its own OLLAMA_HOST. One request slot per slice; keep the model loaded;
+# a 64k context, since a tool-mode episode keeps every page in the conversation (Ollama cuts the oldest part beyond it)
 apptainer exec --nv --env OLLAMA_HOST=127.0.0.1:$PORT --env OLLAMA_MODELS=$HOME/ollama-models \
-  --env OLLAMA_NUM_PARALLEL=$(wc -w <<< "$STARTS") --env OLLAMA_KEEP_ALIVE=-1 \
+  --env OLLAMA_NUM_PARALLEL=$(wc -w <<< "$STARTS") --env OLLAMA_KEEP_ALIVE=-1 --env OLLAMA_CONTEXT_LENGTH=65536 \
   ~/containers/ollama.sif ollama serve > "$LOG" 2>&1 &
 # Ready once it answers and has logged which devices it found (it answers a few seconds before that)
 timeout 120 sh -c "until curl -s http://127.0.0.1:$PORT > /dev/null && grep -q 'inference compute' $LOG; do sleep 2; done" \
@@ -35,7 +37,7 @@ grep -qi "library=cuda" "$LOG" || { echo "Ollama found no GPU; see $LOG"; exit 1
 pids=()
 for start in $STARTS; do
   apptainer exec ~/containers/python.sif .venv/bin/python -m src.evaluation.baseline \
-    --split "$SPLIT" --start "$start" --n "$N" --model "$MODEL" $([ "${THINKING:-on}" = off ] && echo --no-thinking) \
+    --split "$SPLIT" --start "$start" --n "$N" --model "$MODEL" $([ "${THINKING:-on}" = off ] && echo --no-thinking) $([ "${TOOLS:-on}" = on ] && echo --tools) \
     > "hpc/logs/slice_${start}_$SLURM_JOB_ID.out" 2>&1 &
   pids+=($!)
 done
