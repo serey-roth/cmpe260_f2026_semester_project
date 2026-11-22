@@ -9,11 +9,11 @@ Single-agent WebShop shopper with the chain-of-thought prompt v5 (Appendix A), f
 ## 1. Setup
 
 - **Environment:** WebShop with the full catalog (1,181,436 products) and our own search index; at most 25 actions per episode.
-- **Goals:** dev results use the first 50 dev goals (goals 500–549); the teacher data uses train goals 0–599.
+- **Goals:** test results use all 500 test goals (goals 0–499); dev results use the first 50 dev goals (goals 500–549); the teacher data uses train goals 0–599.
 - **Serving:** Ollama on one A100 of the SJSU HPC, with each model's sampling settings from Ollama. Our imported models copy those of Ollama's `qwen3.5:0.8b-bf16`: temperature 1, top_k 20, top_p 0.95, presence penalty 1.5.
 - **Reply:** JSON `{"reasoning", "action"}`, with `reasoning` required and first (structured output).
 - **Thinking:** the model's native (hidden) thinking, set per run. Off sends `reasoning_effort: "none"`. Replies are capped at 8,192 tokens, thinking included.
-- **Message layout:** the prompt and the action history are one system message; the current page is the user message. The teacher data was generated with an earlier layout (section 2.4).
+- **Message layout:** the prompt and the action history are one system message; the current page is the user message. The teacher data was generated with an earlier layout (section 3.4).
 
 | Metric | Definition |
 | :---- | :---- |
@@ -26,9 +26,25 @@ Single-agent WebShop shopper with the chain-of-thought prompt v5 (Appendix A), f
 | No opt | Purchases that needed options but had none selected |
 | Invalid / ep | Mean number of actions per episode that the environment ignored: anything other than `search[<keywords>]` or `click[<value>]` with a value from the current page |
 
-## 2. Results (dev, 50 goals)
+## 2. Results (test, 500 goals)
 
-### 2.1 Base, teacher and student
+Each model was run once on all 500 test goals, after every choice (epoch, settings) was made on dev.
+
+| Model | Thinking | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| Teacher (Qwen3.5-9B) | on | 0.641 | 38.8% (194) | 86.8% (434) | 0.51 | 8.4 | 38 | 66 | 123 | 0.22 |
+| Base (Qwen3.5-0.8B, our GGUF) | off | 0.347 | 14.6% (73) | 54.0% (270) | 0.18 | 16.9 | 273 | 230 | 129 | 4.04 |
+| **Student (SFT, epoch 2)** | off | **0.666** | **39.8% (199)** | **91.6% (458)** | **0.53** | **7.8** | **6** | **42** | **98** | 0.27 |
+
+| Model | Type | Attributes | Options | Price | Searches / ep | Products viewed / ep |
+| :---- | :---- | :---- | :---- | :---- | :---- | :---- |
+| Teacher | 0.94 | 0.78 | 0.51 | 0.99 | 1.98 | 1.09 |
+| Base (our GGUF) | 0.92 | 0.78 | 0.18 | 0.99 | 6.64 | 1.51 |
+| Student | 0.93 | 0.77 | 0.53 | 0.99 | 1.76 | 1.17 |
+
+## 3. Results (dev, 50 goals)
+
+### 3.1 Base, teacher and student
 
 | Model | Thinking | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -38,7 +54,7 @@ Single-agent WebShop shopper with the chain-of-thought prompt v5 (Appendix A), f
 | Base (Qwen3.5-0.8B, our GGUF) | off | 0.277 | 10% | 50% | 0.25 | 17.3 | 31 | 25 | 11 | 3.92 |
 | **Student (SFT, epoch 2)** | off | **0.710** | **40%** | **94%** | **0.51** | 8.3 | **2** | **3** | 13 | 0.36 |
 
-"Our GGUF" is the base model exported to Ollama the same way as the student (section 3), so it is the base the student is compared with.
+"Our GGUF" is the base model exported to Ollama the same way as the student (section 4), so it is the base the student is compared with.
 
 | Model | Type | Attributes | Options | Price | Searches / ep | Products viewed / ep |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -50,7 +66,7 @@ Single-agent WebShop shopper with the chain-of-thought prompt v5 (Appendix A), f
 
 Reward components are means over purchases.
 
-### 2.2 Student epochs
+### 3.2 Student epochs
 
 | Epoch | Validation loss | Reward | Success | Purchase | Option | Avg steps | Loops | No buy | No opt | Invalid / ep |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -58,7 +74,7 @@ Reward components are means over purchases.
 | **2** | **0.754** | **0.710** | **40%** | 94% | 0.51 | 8.3 | 2 | 3 | 13 | 0.36 |
 | 3 | 0.860 | 0.645 | 40% | 84% | 0.55 | 9.6 | 2 | 8 | 10 | 0.80 |
 
-### 2.3 Importing models into Ollama
+### 3.3 Importing models into Ollama
 
 | Model | Import | Reward | Success | Purchase | Avg steps | No buy | Invalid / ep |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -67,7 +83,7 @@ Reward components are means over purchases.
 | Student | GGUF chat template (JSON schema dropped) | 0.602 | 34% | 78% | 9.7 | 11 | 1.54 |
 | Student | Ollama's Qwen3.5 renderer and parser | 0.710 | 40% | 94% | 8.3 | 3 | 0.36 |
 
-### 2.4 Message layout
+### 3.4 Message layout
 
 The first layout sent the prompt and the history as separate system messages, after an extra system message from Pydantic AI about `<system>` tags. Qwen3.5's chat template accepts only one system message, so the current layout merges them and turns Pydantic AI's message off. The prompt text is the same.
 
@@ -78,7 +94,7 @@ The first layout sent the prompt and the history as separate system messages, af
 | Base (Ollama's build) | first | 0.280 | 12% | 48% | 0.14 | 18.3 | 33 | 26 | 5.08 |
 | Base (Ollama's build) | current | 0.371 | 14% | 60% | 0.15 | 15.7 | 26 | 20 | 3.80 |
 
-### 2.5 Base model failures
+### 3.5 Base model failures
 
 Invalid actions of the base (Ollama's build, first layout; 254 over 50 episodes, none from timeouts):
 
@@ -92,7 +108,7 @@ Invalid actions of the base (Ollama's build, first layout; 254 over 50 episodes,
 
 With thinking on, the base's thinking ran past the 8,192-token reply cap on every step we inspected after its first search, and no episode finished.
 
-## 3. Teacher Data and SFT
+## 4. Teacher Data and SFT
 
 | | |
 | :---- | :---- |
@@ -103,15 +119,15 @@ With thinking on, the base's thinking ran past the 8,192-token reply cap on ever
 | Training | `Qwen/Qwen3.5-0.8B`, text-only, full fine-tune with TRL `SFTTrainer`, loss on the reply only; 3 epochs (1,758 updates, batch 2, learning rate 2e-5), 1,905 s on one A100 |
 | Serving | Converted to GGUF with the llama.cpp release Ollama bundles, and imported into Ollama with Ollama's Qwen3.5 renderer and parser |
 
-## 4. Findings
+## 5. Findings
 
-1. **SFT lifts Qwen3.5-0.8B from 10% to 40% success** (0.277 to 0.710 reward). The student buys in 94% of episodes instead of 50%, loops in 2 instead of 31, makes 0.36 invalid actions per episode instead of 3.92, and searches 1.70 times per episode instead of 7.22.
-2. **The student scores above its teacher.** Against the teacher as it generated the data (thinking on): 0.710 against 0.554 reward, 40% against 32% success, 94% against 78% purchases, 0.51 against 0.44 option score. The student learned only from the teacher's successful episodes, and without its native thinking.
+1. **SFT lifts Qwen3.5-0.8B from 14.6% to 39.8% success on test** (0.347 to 0.666 reward; on dev, 10% to 40%). The student buys in 91.6% of episodes instead of 54.0%, loops in 6 instead of 273, makes 0.27 invalid actions per episode instead of 4.04, and searches 1.76 times per episode instead of 6.64.
+2. **The student matches its teacher on test.** Against the teacher as it generated the data (thinking on): 39.8% against 38.8% success (199 against 194), 0.666 against 0.641 reward, and 0.53 against 0.51 option score. It buys more often (91.6% against 86.8%) and loops less (6 against 38 episodes). On dev the student was ahead (40% against 32% success); the test split does not confirm that lead. The student learned only from the teacher's successful episodes, and without its native thinking.
 3. **Native thinking gives the teacher more successes and better options, but lower reward.** With thinking on, the 9B has 32% success against 24% and an option score of 0.44 against 0.26, but 0.554 reward against 0.595: it buys less often (78% against 86%) and loops more (8 against 5).
 4. **Epoch 2 is the best student**, by validation loss and by dev reward (0.710). With more epochs, episodes get longer (5.8, 8.3, 9.6 steps) and purchases fewer (98%, 94%, 84%); invalid actions per episode go from 0.36 (epoch 2) to 0.80 (epoch 3).
 5. **An imported model needs Ollama's Qwen3.5 renderer and parser.** Without them, Ollama renders the prompt with the GGUF's chat template: the same prompt text, but the JSON schema is silently dropped, so replies can put the action before the reasoning. That cut the base to 6% success (3 purchases) and the student to 34%. With them, our GGUF gives the same replies as Ollama's build of the same weights (checked at temperature 0).
 6. **The message layout changes little.** Going to one system message: the 9B (thinking off) from 28% to 24% success, the base from 12% to 14%.
-7. **The base fails mostly on actions, not choices.** It makes 3.80 (current layout) and 5.08 (first layout) invalid actions per episode, 60% of them values not on the page, loops in 26 and 33 of 50 episodes, and cannot run with thinking on (2.5).
+7. **The base fails mostly on actions, not choices.** It makes 3.80 (current layout) and 5.08 (first layout) invalid actions per episode, 60% of them values not on the page, loops in 26 and 33 of 50 episodes, and cannot run with thinking on (3.5).
 
 ## Appendix A. Prompt (v5)
 
