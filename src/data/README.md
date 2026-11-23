@@ -58,3 +58,41 @@ uv run python -m src.data.search_index --num-docs 2000000   # the whole catalog
 ```
 
 It writes the index to `src/data/search-index/index` which is used to build the env for the full catalog.
+
+## Provisional SFT demonstrations
+
+The project does not yet specify a shared SFT format. The following local
+pipeline produces a provisional format that must be reconciled with the
+group's eventual training schema before use. It streams the full catalog into
+a 100,000-product search subset, retaining all human-goal products and the
+original prices, goal ordering, and split assignments. Search results are
+from this subset, not the entire catalog.
+
+With the full-catalog files above available and an Ollama model installed:
+
+```bash
+uv run python -m src.training.prepare_catalog
+uv run python -m src.training.generate_sft index
+uv run python -m src.training.generate_sft generate --model gemma3:4b --count 100
+```
+
+Set `PYTHONIOENCODING=utf-8` if the terminal cannot print product titles.
+Preparation and generation refuse to overwrite existing output directories;
+use `--output-dir` to choose another location. Prepared data and output are
+ignored by Git under `src/data/sft-prepared/`.
+
+The generator attempts the first 100 deduplicated **train** goals by default;
+it never selects dev or test goals. `run/attempts.jsonl` contains the complete
+episode records, including failed attempts. `run/sft.jsonl` contains one
+training decision per line, with `messages` (user prompt and assistant action),
+`goal_idx`, `step`, and `reward`. `run/config.json` records the model, split,
+seed, selection, and acceptance rule.
+
+Only completed trajectories that purchase the target product with reward 1,
+a price strictly below any stated cap, valid actions, and no repeated action
+are exported. Add `--inspect-products` to prompt the model to inspect each
+product and require it to inspect the purchased product. This changes the
+prompts saved in the examples. These are automatic filters, not proof of
+demonstration quality: inspect examples for correct product attributes,
+options, and decision-making before training. The number of accepted
+trajectories may be much smaller than the number of attempted goals.

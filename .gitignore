@@ -12,3 +12,4 @@ dist/
 *.jsonl
 src/data/webshop-data/
 src/data/search-index/
+src/data/sft-prepared/

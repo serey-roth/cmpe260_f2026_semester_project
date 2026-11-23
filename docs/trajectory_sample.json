@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "trajectory_id": "test_gemma3-4b_direct_20261108_120721_goal_2",
+  "metadata": {
+    "environment": "WebShop",
+    "agent_type": "single_agent",
+    "model": "gemma3:4b",
+    "prompt_style": "direct",
+    "split": "test",
+    "run_timestamp": "20261108_120721",
+    "source_record": "src/agents/logs/test_gemma3-4b_direct_20261108_120721.jsonl"
+  },
+  "task": {
+    "goal_idx": 2,
+    "instruction": "Instruction: i am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars"
+  },
+  "outcome": {
+    "reward": 1.0,
+    "done": true,
+    "num_steps": 5,
+    "reward_info": {
+      "r_type": 1.0,
+      "r_att": 1.0,
+      "w_att": 0.25,
+      "query_match": true,
+      "category_match": true,
+      "title_score": 0.42857142857142855,
+      "r_option": 1.0,
+      "w_option": 0.5,
+      "r_price": true,
+      "w_price": 0.25
+    },
+    "purchase": {
+      "asin": "B082MT9162",
+      "title": "GLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes",
+      "price": 32.65816529512694,
+      "options": {
+        "size": "10.5",
+        "color": "2005black"
+      }
+    }
+  },
+  "steps": [
+    {
+      "step": 1,
+      "observation": "WebShop\nInstruction: \ni am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars\n[button] Search [button_]\n",
+      "reply": "search[men's size 10.5 black loafers rubber soles price <60]",
+      "thought": null,
+      "action": "search[men's size 10.5 black loafers rubber soles price <60]",
+      "details": {
+        "type": "search",
+        "query": "men's size 10.5 black loafers rubber soles price <60"
+      },
+      "reward": 0.0,
+      "done": false
+    },
+    {
+      "step": 2,
+      "observation": "Instruction:\ni am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars\n[button] Back to Search [button_]\nPage 1 (Total results: 50)\n[button] Next > [button_]\n\n[button] B082MT9162 [button_]\nGLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes\n$29.99 to $49.99\n\n[button] B07HP6LVRS [button_]\nMCICI Mens Loafers Moccasin Driving Shoes Premium Genuine Leather Casual Slip On Flats Fashion Slipper Breathable Big Size\n$15.99 to $32.99\n\n[button] B09F2MFG1Q [button_]\nWomens Mens house slippers Memory Foam Garden Plush Lining Slip On Rubber sole Indoor Outdoor House Casual Shoes （Black adult-10.5-11)\n$100.0\n\n[button] B07RPMCNKD [button_]\nULTRAIDEAS Women's Comfy Lightweight Slippers Non-Slip House Shoes for Indoor & Outdoor\n$19.99 to $21.99\n\n[button] B07S7HDC88 [button_]\nVanciLin Mens Casual Leather Fashion Slip-on Loafers\n$33.99 to $35.99\n\n[button] B07CN9RZ1C [button_]\nEcco Men's Melbourne Plain Toe Slip on Loafer\n$114.99\n\n[button] B002RRT0NM [button_]\nBerkemann Women's Clogs and Mules, 5 UK\n$78.42 to $94.9\n\n[button] B09QXF3V3X [button_]\nDEUVOUM Summer Trend Mesh Shoes Men's Sports Shoes Solid Color Lace-Up Sneakers Fashion All-Match Walking Shoes Outdoor Hiking Shoes Non-Slip Shock-Absorbing Casual Sports Shoes\n$100.0\n\n[button] B094RBNS2K [button_]\nMens Running Tennis Blade Shoes Lightweight Casual Walking Sneakers Mesh Breathable Sport Sneakers Sheet Shoes\n$27.0\n\n[button] B008QYOGZ2 [button_]\nOluKai MEA Ola - Men's Supportive Sandal Charcoal/Dkjava - 14\n$100.0\n",
+      "reply": "click[B082MT9162]",
+      "thought": null,
+      "action": "click[b082mt9162]",
+      "details": {
+        "type": "product",
+        "asin": "B082MT9162",
+        "title": "GLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes",
+        "price": 32.65816529512694
+      },
+      "reward": 0.0,
+      "done": false
+    },
+    {
+      "step": 3,
+      "observation": "Instruction:\ni am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars\n[button] Back to Search [button_]\n[button] < Prev [button_]\nsize\n  [button] 7 [button_]\n  [button] 7.5 [button_]\n  [button] 8 [button_]\n  [button] 8.5 [button_]\n  [button] 9 [button_]\n  [button] 9.5 [button_]\n  [button] 10 [button_]\n  [button] 10.5 [button_]\n  [button] 11 [button_]\n  [button] 12 [button_]\n  [button] 13 [button_]\ncolor\n  [button] 2005brown [button_]\n  [button] 2005grey [button_]\n  [button] 2005black [button_]\nGLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes\nPrice: $29.99 to $49.99\nRating: N.A.\n[button] Description [button_]\n[button] Features [button_]\n[button] Reviews [button_]\n[button] Buy Now [button_]\n",
+      "reply": "click[10.5]",
+      "thought": null,
+      "action": "click[10.5]",
+      "details": {
+        "type": "option",
+        "option": "size",
+        "value": "10.5"
+      },
+      "reward": 0.0,
+      "done": false
+    },
+    {
+      "step": 4,
+      "observation": "You have clicked 10.5.\nInstruction:\ni am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars\n[button] Back to Search [button_]\n[button] < Prev [button_]\nsize\n  [button] 7 [button_]\n  [button] 7.5 [button_]\n  [button] 8 [button_]\n  [button] 8.5 [button_]\n  [button] 9 [button_]\n  [button] 9.5 [button_]\n  [button] 10 [button_]\n  [clicked button] 10.5 [clicked button_]\n  [button] 11 [button_]\n  [button] 12 [button_]\n  [button] 13 [button_]\ncolor\n  [button] 2005brown [button_]\n  [button] 2005grey [button_]\n  [button] 2005black [button_]\nGLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes\nPrice: $29.99 to $49.99\nRating: N.A.\n[button] Description [button_]\n[button] Features [button_]\n[button] Reviews [button_]\n[button] Buy Now [button_]\n",
+      "reply": "click[2005black]",
+      "thought": null,
+      "action": "click[2005black]",
+      "details": {
+        "type": "option",
+        "option": "color",
+        "value": "2005black"
+      },
+      "reward": 0.0,
+      "done": false
+    },
+    {
+      "step": 5,
+      "observation": "You have clicked 2005black.\nYou have clicked 10.5.\nInstruction:\ni am looking for a pair of men's size 10.5 black loafers with rubber soles, and price lower than 60.00 dollars\n[button] Back to Search [button_]\n[button] < Prev [button_]\nsize\n  [button] 7 [button_]\n  [button] 7.5 [button_]\n  [button] 8 [button_]\n  [button] 8.5 [button_]\n  [button] 9 [button_]\n  [button] 9.5 [button_]\n  [button] 10 [button_]\n  [clicked button] 10.5 [clicked button_]\n  [button] 11 [button_]\n  [button] 12 [button_]\n  [button] 13 [button_]\ncolor\n  [button] 2005brown [button_]\n  [button] 2005grey [button_]\n  [clicked button] 2005black [clicked button_]\nGLOBALWIN Men's Casual Slip On Penny Loafers Lightweight Driving Shoes\nPrice: $29.99 to $49.99\nRating: N.A.\n[button] Description [button_]\n[button] Features [button_]\n[button] Reviews [button_]\n[button] Buy Now [button_]\n",
+      "reply": "click[buy now]",
+      "thought": null,
+      "action": "click[buy now]",
+      "details": {
+        "type": "nav",
+        "target": "buy now"
+      },
+      "reward": 1.0,
+      "done": true
+    }
+  ]
+}
